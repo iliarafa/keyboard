@@ -1,0 +1,1260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Type a Tune</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="A home-row typing game for kids. Every key plays the next note of a song, and a steady beat lights up the stars.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Grandstander:wght@600;800&display=swap">
+<style>
+/* Layout: one night-sky stage. Typing draws the song as a constellation in the sky strip,
+   the words sit on the horizon below it, and the keyboard and hands are the ground. */
+:root {
+  --sky-0: #0a1430;      /* deep night */
+  --sky-1: #1a2a55;      /* horizon glow */
+  --panel: #121e40;
+  --line: #2b3b6b;
+  --ink: #050b1c;        /* shadows */
+  --paper: #eef1fb;      /* text */
+  --muted: #8d9ac2;
+  --star: #ffd56a;       /* accent: starlight */
+  --miss: #ff7b7b;
+  --fix: #ffb35c;
+  --f-pinky: #ff92c2;    /* one color per finger, same on both hands */
+  --f-ring: #ffb070;
+  --f-middle: #c8e86e;
+  --f-index: #71d4ff;
+  --f-thumb: #b9a6ff;
+  --font-display: "Grandstander", "Trebuchet MS", system-ui, sans-serif;
+  --font-body: "Andika", "Verdana", "Segoe UI", system-ui, sans-serif; /* Andika: made for beginning readers */
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { background: var(--sky-0); }
+body {
+  margin: 0;
+  background: var(--sky-0);
+  color: var(--paper);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; color: inherit; }
+
+.app {
+  max-width: 980px;
+  margin: 0 auto;
+  padding-block: 14px 28px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---------- Header ---------- */
+.top { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
+.brand {
+  display: flex; align-items: center; gap: 8px;
+  margin: 0 auto 0 0;
+  font: 800 26px/1 var(--font-display);
+  letter-spacing: 0.01em;
+}
+.brand svg { width: 26px; height: 26px; }
+.brand svg path { fill: var(--star); }
+.lessons { display: flex; flex-wrap: wrap; gap: 6px; }
+.lesson {
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  min-width: 54px;
+  padding: 6px 10px 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--muted);
+  cursor: pointer;
+}
+.lesson:hover { color: var(--paper); }
+.lesson.on {
+  color: var(--paper);
+  border-color: var(--star);
+  background: color-mix(in srgb, var(--star) 12%, var(--panel));
+}
+.lesson-keys { font: 700 15px/1.1 var(--font-body); letter-spacing: 0.06em; white-space: nowrap; }
+.lesson-stars { font-size: 11px; line-height: 1; letter-spacing: 1px; }
+.lesson-stars i { font-style: normal; opacity: 0.3; }
+.lesson-stars i.on { color: var(--star); opacity: 1; }
+.icon-btn {
+  width: 42px; height: 42px;
+  display: grid; place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--panel);
+  cursor: pointer;
+}
+.icon-btn svg { width: 22px; height: 22px; }
+.icon-btn path { fill: none; stroke: var(--paper); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.icon-btn .spk { fill: var(--paper); }
+.icon-btn[aria-pressed="false"] .waves { display: none; }
+.icon-btn[aria-pressed="true"] .mute { display: none; }
+
+/* ---------- Stage ---------- */
+.stage {
+  position: relative;
+  min-height: 456px;
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 14px 18px 16px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: linear-gradient(180deg, var(--sky-0) 0%, var(--sky-1) 100%);
+  overflow: hidden;
+}
+.stage-head {
+  position: relative; z-index: 1;
+  display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap;
+  gap: 10px 20px;
+}
+.eyebrow {
+  margin: 0;
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted);
+}
+.now { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.song { font: 700 19px/1.2 var(--font-display); }
+.count { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.flow { width: min(300px, 100%); }
+.flow-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+#flowWord { font: 700 15px/1.2 var(--font-display); color: var(--star); }
+.meter {
+  position: relative;
+  height: 12px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 10%, transparent);
+}
+.meter .fill {
+  position: absolute; inset: 0 auto 0 0;
+  width: 0%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--star) 40%, var(--sky-1)), var(--star));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--star) 45%, transparent);
+  transition: width 0.25s ease-out;
+}
+.notch {
+  position: absolute; top: -3px; bottom: -3px;
+  width: 2px; margin-left: -1px;
+  border-radius: 1px;
+  background: var(--paper);
+  opacity: 0.5;
+}
+.flow-legend { position: relative; height: 16px; margin-top: 3px; font-size: 12px; color: var(--muted); }
+.flow-legend span { position: absolute; transform: translateX(-50%); white-space: nowrap; transition: color 0.2s; }
+.flow-legend span.lit { color: var(--star); }
+
+.sky-wrap { position: relative; height: 168px; margin-inline: -18px; }
+#sky { display: block; width: 100%; height: 100%; }
+.sky-hint {
+  position: absolute; left: 50%; top: 10px;
+  transform: translateX(-50%);
+  width: max-content; max-width: calc(100% - 32px);
+  padding: 6px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sky-0) 85%, transparent);
+  font-size: 14px;
+  text-align: center;
+}
+
+.text {
+  display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start;
+  min-height: 3.1em;
+  font: 400 clamp(24px, 4.4vw, 40px)/1.55 var(--font-body);
+  letter-spacing: 0.03em;
+}
+.word { display: flex; }
+.ch {
+  position: relative;
+  display: inline-block;
+  padding: 0 0.04em;
+  border-radius: 6px;
+  transition: color 0.15s;
+}
+.ch.sp { width: 0.55em; }
+.ch.sp::after {
+  content: "";
+  position: absolute; left: 50%; top: 58%;
+  width: 6px; height: 6px; margin: -3px;
+  border-radius: 50%;
+  background: var(--muted);
+  opacity: 0.45;
+}
+.ch.ok { color: var(--muted); opacity: 0.75; }
+.ch.miss { color: var(--miss); text-decoration: underline wavy var(--miss) 2px; text-underline-offset: 6px; }
+.ch.sp.miss::after { background: var(--miss); opacity: 1; }
+.ch.fixed { color: var(--fix); }
+.ch.sp.fixed::after { background: var(--fix); opacity: 1; }
+.ch.cur {
+  color: var(--star);
+  background: color-mix(in srgb, var(--star) 16%, transparent);
+  box-shadow: inset 0 -3px 0 var(--star);
+}
+.ch.sp.cur::after { background: var(--star); opacity: 1; }
+
+.float {
+  position: absolute; z-index: 3;
+  pointer-events: none;
+  font-size: 22px;
+  color: var(--star);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--star) 70%, transparent);
+  animation: rise 0.9s ease-out forwards;
+}
+@keyframes rise {
+  from { opacity: 1; transform: translate(-50%, 0) scale(0.8); }
+  to { opacity: 0; transform: translate(-50%, -48px) scale(1.15); }
+}
+
+/* ---------- Overlays ---------- */
+.overlay {
+  position: absolute; inset: 0; z-index: 5;
+  display: grid; place-items: center;
+  padding: 16px;
+  overflow: auto;
+  background: color-mix(in srgb, var(--sky-0) 50%, transparent);
+}
+.card {
+  width: min(540px, 100%);
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 22px 24px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
+  box-shadow: 0 20px 60px color-mix(in srgb, var(--ink) 70%, transparent);
+}
+.card h2 { margin: 0; font: 800 26px/1.15 var(--font-display); text-wrap: balance; }
+.card p { margin: 0; }
+.howto { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; }
+.howto li::marker { color: var(--star); }
+.muted { color: var(--muted); }
+.btn-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-top: 4px; }
+.btn {
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--star);
+  color: var(--sky-0);
+  font: 700 17px/1 var(--font-display);
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--star) 45%, var(--ink));
+  cursor: pointer;
+}
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 color-mix(in srgb, var(--star) 45%, var(--ink)); }
+.btn.ghost { background: transparent; color: var(--paper); border: 1px solid var(--line); box-shadow: none; }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btn:focus-visible, .lesson:focus-visible, .icon-btn:focus-visible { outline: 3px solid var(--f-index); outline-offset: 2px; }
+.kbd {
+  display: inline-grid; place-items: center;
+  min-width: 1.7em; height: 1.7em;
+  padding: 0 0.4em;
+  border: 1px solid var(--line);
+  border-bottom-width: 3px;
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--paper);
+  font-size: 0.85em; font-weight: 700; line-height: 1;
+}
+.keys { display: inline-flex; gap: 3px; }
+
+.stars-big { display: flex; gap: 6px; }
+.stars-big svg { width: 46px; height: 46px; }
+.stars-big path { stroke: var(--star); stroke-width: 1.6; stroke-linejoin: round; fill: none; }
+.stars-big .on path { fill: var(--star); }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.stat { padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--paper) 6%, transparent); }
+.stat b { display: block; font: 800 26px/1.1 var(--font-display); font-variant-numeric: tabular-nums; }
+.stat span { font-size: 13px; color: var(--muted); }
+.tricky { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--muted); }
+.goal { font-size: 14px; color: var(--muted); }
+
+/* ---------- Keyboard and hands ---------- */
+.kb-area {
+  --u: min(50px, calc((100vw - 72px) / 14));
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.next {
+  margin: 0;
+  min-height: 1.9em;
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px;
+  text-align: center;
+  color: var(--muted);
+}
+.next .who { color: var(--paper); font-weight: 700; }
+.warn { color: var(--fix); font-weight: 700; }
+.dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--fc); }
+.keyboard { display: flex; flex-direction: column; gap: calc(var(--u) * 0.12); }
+.kb-row { display: flex; gap: calc(var(--u) * 0.12); }
+.f-lp, .f-rp { --fc: var(--f-pinky); }
+.f-lr, .f-rr { --fc: var(--f-ring); }
+.f-lm, .f-rm { --fc: var(--f-middle); }
+.f-li, .f-ri { --fc: var(--f-index); }
+.f-th { --fc: var(--f-thumb); }
+.key {
+  position: relative;
+  width: var(--u); height: var(--u);
+  display: grid; place-items: center;
+  border: 1px solid color-mix(in srgb, var(--fc) 22%, var(--line));
+  border-bottom-width: calc(var(--u) * 0.08);
+  border-radius: calc(var(--u) * 0.2);
+  background: color-mix(in srgb, var(--fc) 8%, var(--panel));
+  color: color-mix(in srgb, var(--muted) 70%, transparent);
+  font: 700 calc(var(--u) * 0.4)/1 var(--font-body);
+  transition: transform 0.08s, background 0.12s, color 0.12s;
+}
+.key.live {
+  color: var(--paper);
+  background: color-mix(in srgb, var(--fc) 24%, var(--panel));
+  border-color: color-mix(in srgb, var(--fc) 60%, transparent);
+}
+.key.next {
+  background: var(--fc);
+  color: var(--sky-0);
+  transform: translateY(-2px);
+  animation: breathe 1.4s ease-in-out infinite;
+}
+.key.press { transform: translateY(2px); border-bottom-width: 1px; }
+.key.oops { background: var(--miss); color: var(--sky-0); animation: shake 0.28s; }
+.key.bump::after {
+  content: "";
+  position: absolute; bottom: 16%; left: 36%; right: 36%;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.7;
+}
+.key.space { width: calc(var(--u) * 6.2); }
+@keyframes breathe {
+  0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--fc) 35%, transparent), 0 0 14px color-mix(in srgb, var(--fc) 45%, transparent); }
+  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--fc) 22%, transparent), 0 0 26px color-mix(in srgb, var(--fc) 70%, transparent); }
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+.hands { display: flex; justify-content: center; gap: calc(var(--u) * 1.5); padding-top: 4px; }
+.hand { position: relative; width: calc(var(--u) * 3.4); height: calc(var(--u) * 1.9); }
+.fingers {
+  position: absolute; left: 0; right: 0; bottom: calc(var(--u) * 0.5);
+  height: calc(var(--u) * 1.35);
+  display: flex; justify-content: space-between; align-items: flex-end;
+  padding: 0 5%;
+}
+.fg {
+  display: block;
+  width: 20%;
+  border: 2px solid color-mix(in srgb, var(--fc) 50%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fc) 22%, var(--panel));
+  transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.fg.on {
+  background: var(--fc);
+  border-color: var(--fc);
+  transform: translateY(-6px);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--fc) 70%, transparent);
+}
+.f-lp.fg, .f-rp.fg { height: 58%; }
+.f-lr.fg, .f-rr.fg { height: 82%; }
+.f-lm.fg, .f-rm.fg { height: 94%; }
+.f-li.fg, .f-ri.fg { height: 80%; }
+.palm {
+  position: absolute; left: 3%; right: 3%; bottom: 0;
+  height: calc(var(--u) * 0.72);
+  border-radius: 40% 40% 46% 46% / 50% 50% 60% 60%;
+  background: color-mix(in srgb, var(--paper) 9%, var(--panel));
+}
+.fg.thumb { position: absolute; bottom: 4%; width: 19%; height: 58%; }
+.hand.left .thumb { right: -10%; transform: rotate(52deg); }
+.hand.right .thumb { left: -10%; transform: rotate(-52deg); }
+.hand.left .thumb.on { transform: rotate(52deg) translateY(-6px); }
+.hand.right .thumb.on { transform: rotate(-52deg) translateY(-6px); }
+
+.foot { margin: 0; text-align: center; font-size: 14px; color: var(--muted); }
+
+@media (max-width: 560px) {
+  .stage { min-height: 600px; padding: 12px 14px 14px; }
+  .sky-wrap { margin-inline: -14px; height: 140px; }
+  .card { padding: 18px; }
+  .card h2 { font-size: 22px; }
+  .stat b { font-size: 21px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1 class="brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.9 6 6.5.8-4.8 4.5 1.2 6.5L12 17.3l-5.8 3.1 1.2-6.5L2.6 9.4l6.5-.8z"/></svg>
+      Type a Tune
+    </h1>
+    <nav class="lessons" id="lessons" aria-label="Lessons"></nav>
+    <button type="button" class="icon-btn" id="soundBtn" aria-pressed="true" aria-label="Sound">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path class="spk" d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/>
+        <path class="waves" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>
+        <path class="mute" d="M16 9.5l5 5M21 9.5l-5 5"/>
+      </svg>
+    </button>
+  </header>
+
+  <main class="stage" id="stage">
+    <div class="stage-head">
+      <div class="now">
+        <p class="eyebrow" id="lessonName">Lesson 1 · Pointer fingers</p>
+        <span class="song">Twinkle, Twinkle, Little Star</span>
+        <span class="count" id="noteCount">0 of 48 notes</span>
+      </div>
+      <div class="flow">
+        <div class="flow-top"><span class="eyebrow">Flow</span><span id="flowWord">Warming up</span></div>
+        <div class="meter"><div class="fill" id="flowFill"></div><i class="notch" style="left:50%"></i><i class="notch" style="left:75%"></i></div>
+        <div class="flow-legend"><span id="legendBass" style="left:50%">+ bass</span><span id="legendSparkle" style="left:75%">+ sparkles</span></div>
+      </div>
+    </div>
+    <div class="sky-wrap">
+      <canvas id="sky" aria-label="Each note you type becomes a star. Steady typing makes evenly spaced stars."></canvas>
+      <div class="sky-hint" id="skyHint" hidden></div>
+    </div>
+    <div class="text" id="text" aria-label="Letters to type"></div>
+
+    <div class="overlay" id="intro">
+      <div class="card">
+        <p class="eyebrow" id="introLesson">Lesson 1 · Pointer fingers</p>
+        <h2>Every key plays the next note</h2>
+        <p id="introTip">Rest your pointer fingers on F and J.</p>
+        <ul class="howto">
+          <li><strong>Keep a steady beat</strong>, like footsteps. Step, step, step.</li>
+          <li>The faint star shows when the next note is due. Press the key as it reaches the glowing line.</li>
+          <li>Steady keys make big, bright stars. Pressed a wrong key? Keep going.</li>
+        </ul>
+        <div class="btn-row">
+          <button type="button" class="btn" id="startBtn">Start the song</button>
+          <span class="muted">or press <span class="kbd">Space</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="overlay" id="results" hidden></div>
+  </main>
+
+  <section class="kb-area" aria-label="Keyboard guide">
+    <p class="next" id="nextLabel" aria-live="polite"></p>
+    <div class="keyboard" id="keyboard" aria-hidden="true"></div>
+    <div class="hands" id="hands" aria-hidden="true">
+      <div class="hand left">
+        <div class="fingers"><i class="fg f-lp" data-f="lp"></i><i class="fg f-lr" data-f="lr"></i><i class="fg f-lm" data-f="lm"></i><i class="fg f-li" data-f="li"></i></div>
+        <div class="palm"></div>
+        <i class="fg thumb f-th" data-f="th"></i>
+      </div>
+      <div class="hand right">
+        <div class="fingers"><i class="fg f-ri" data-f="ri"></i><i class="fg f-rm" data-f="rm"></i><i class="fg f-rr" data-f="rr"></i><i class="fg f-rp" data-f="rp"></i></div>
+        <div class="palm"></div>
+        <i class="fg thumb f-th" data-f="th"></i>
+      </div>
+    </div>
+  </section>
+
+  <p class="foot">Made a mistake? Keep going. Press <span class="kbd">Esc</span> to start the song over.</p>
+</div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ---------- Song: "Twinkle, Twinkle, Little Star" (traditional, public domain) ----------
+  // Long notes are struck twice so every beat is one key: 48 notes, 48 keys per lesson.
+  const MELODY = 'C C G G A A G G F F E E D D C C G G F F E E D D G G F F E E D D C C G G A A G G F F E E D D C C'.split(' ');
+  const CHORDS = 'C C F C F C G C C F C G C F C G C C F C F C G C'.split(' '); // one chord per two notes
+  const MEL_HZ = { C: 523.25, D: 587.33, E: 659.25, F: 698.46, G: 783.99, A: 880.0 };
+  const BASS_HZ = { C: [130.81, 196.0], F: [174.61, 261.63], G: [196.0, 293.66] };
+  const ROW_OF = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5 };
+  const LEN = MELODY.length;
+
+  // ---------- Flow scoring ----------
+  // Steadiness of one keystroke = how close its gap is to the typist's own recent beat.
+  // exp(-K * |ln(gap / beat)|): on the beat = 1, 50% late = 0.57, twice as long = 0.38.
+  const K = 1.4;
+  const BASS_AT = 0.5;      // flow needed before the bass joins in
+  const SPARKLE_AT = 0.75;  // flow needed for sparkles
+  const STARS2 = { flow: 0.6, acc: 0.85 };
+  const STARS3 = { flow: 0.75, acc: 0.93 };
+
+  // ---------- Fingers, keys, lessons ----------
+  const FINGERS = {
+    lp: 'left pinky', lr: 'left ring finger', lm: 'left middle finger', li: 'left pointer finger',
+    ri: 'right pointer finger', rm: 'right middle finger', rr: 'right ring finger', rp: 'right pinky', th: 'either thumb',
+  };
+  const FINGER_KEYS = { lp: 'qaz', lr: 'wsx', lm: 'edc', li: 'rtfgvb', ri: 'yuhjnm', rm: 'ik,', rr: 'ol.', rp: "p;/[]'", th: ' ' };
+  const FINGER_OF = {};
+  for (const [f, ks] of Object.entries(FINGER_KEYS)) for (const k of ks) FINGER_OF[k] = f;
+  const ROWS = [
+    { off: 0.5, keys: [...'qwertyuiop[]'] },
+    { off: 0.75, keys: [..."asdfghjkl;'"] },
+    { off: 1.25, keys: [...'zxcvbnm,./'] },
+  ];
+  const WORDS = ('a as ad ah ha add all ask dad sad lad had has gas ash fad lag fall hall glad flag dash half ' +
+    'alas lads dads asks gala sash hash salad flask glass shall flash flags falls halls salsa slash salads flasks').split(' ');
+  const LESSONS = [
+    { id: 'fj', label: 'F J', title: 'Pointer fingers', keys: 'fj', fresh: 'fj',
+      tip: 'Rest your pointer fingers on F and J. Feel the little bumps? They help you find home without looking.' },
+    { id: 'dk', label: 'D K', title: 'Middle fingers', keys: 'fjdk', fresh: 'dk',
+      tip: 'Your middle fingers rest on D and K, right next to your pointer fingers.' },
+    { id: 'sl', label: 'S L', title: 'Ring fingers', keys: 'fjdksl', fresh: 'sl',
+      tip: 'Your ring fingers rest on S and L.' },
+    { id: 'ap', label: 'A ;', title: 'Pinkies', keys: 'fjdksla;', fresh: 'a;',
+      tip: 'Your pinkies rest on A and the ; key. They are small, but they can keep the beat too.' },
+    { id: 'gh', label: 'G H', title: 'Reach in', keys: 'fjdksla;gh', fresh: 'gh',
+      tip: 'G and H are a short reach in for your pointer fingers. Reach, press, and slide back home.' },
+    { id: 'words', label: 'Words', title: 'Home row words', keys: 'asdfghjkl', words: WORDS,
+      tip: 'Real words now. Keep the same steady beat, and tap the space bar with your thumb.' },
+  ];
+
+  // ---------- Text generation (always exactly LEN characters) ----------
+  const BLOCK = /kkk|fag|ass|shag|hag/;
+  const rnd = (n) => Math.floor(Math.random() * n);
+  const pick = (a) => a[rnd(a.length)];
+
+  function drillChunk(L) {
+    const fresh = [...L.fresh], all = [...L.keys];
+    const r = Math.random();
+    let s = '';
+    if (r < 0.28) {
+      s = pick(fresh).repeat(2 + rnd(2));                      // "dd", "ddd"
+    } else if (r < 0.55) {
+      const a = fresh[0], b = fresh[1] || pick(all), n = 2 + rnd(3);
+      for (let i = 0; i < n; i++) s += i % 2 ? b : a;          // "dkd", "kdkd"
+      if (Math.random() < 0.5) s = [...s].reverse().join('');
+    } else {
+      const n = 2 + rnd(3);
+      for (let i = 0; i < n; i++) s += Math.random() < 0.55 ? pick(fresh) : pick(all);
+    }
+    return BLOCK.test(s) ? drillChunk(L) : s;
+  }
+
+  function makeDrill(L) {
+    const out = [];
+    let used = 0;
+    for (let guard = 0; guard < 500; guard++) {
+      const rem = LEN - used - (out.length ? 1 : 0);
+      let c = drillChunk(L);
+      if (c.length >= rem - 1) {                // last group: fill exactly what is left
+        while (c.length < rem) c += drillChunk(L);
+        c = c.slice(0, rem);
+        if (BLOCK.test(c)) continue;
+        out.push(c);
+        break;
+      }
+      out.push(c);
+      used += c.length + (out.length > 1 ? 1 : 0);
+    }
+    return out.join(' ');
+  }
+
+  function makeWords(words) {
+    const byLen = {};
+    for (const w of words) (byLen[w.length] = byLen[w.length] || []).push(w);
+    const out = [];
+    let used = 0;
+    for (let guard = 0; guard < 500; guard++) {
+      const rem = LEN - used - (out.length ? 1 : 0);
+      if (rem <= 6 && byLen[rem]) { out.push(pick(byLen[rem])); break; }
+      const options = words.filter((w) => w.length <= rem - 2 && w !== out[out.length - 1]);
+      const w = pick(options);
+      out.push(w);
+      used += w.length + (out.length > 1 ? 1 : 0);
+    }
+    return out.join(' ');
+  }
+
+  // ---------- Saved progress (this browser only) ----------
+  const STORE = 'type-a-tune:v1';
+  const saved = { best: {}, sound: true };
+  try { Object.assign(saved, JSON.parse(localStorage.getItem(STORE)) || {}); } catch (e) { /* storage unavailable */ }
+  function persist() { try { localStorage.setItem(STORE, JSON.stringify(saved)); } catch (e) { /* ignore */ } }
+
+  // ---------- Sound: a small music box ----------
+  const Sound = {
+    ctx: null, out: null, bus: null, on: saved.sound !== false,
+    init() {
+      if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {}); return; }
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      try {
+        const ctx = new AC();
+        const out = ctx.createGain();
+        out.gain.value = this.on ? 0.8 : 0;
+        const comp = ctx.createDynamicsCompressor();
+        out.connect(comp); comp.connect(ctx.destination);
+        const bus = ctx.createGain();
+        bus.connect(out);
+        const verb = ctx.createConvolver();
+        this.ctx = ctx;
+        verb.buffer = this.impulse(2.4, 3.2);
+        const wet = ctx.createGain();
+        wet.gain.value = 0.3;
+        bus.connect(verb); verb.connect(wet); wet.connect(out);
+        this.out = out; this.bus = bus;
+      } catch (e) { this.ctx = null; }
+    },
+    impulse(sec, decay) {
+      const ctx = this.ctx, n = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(2, n, ctx.sampleRate);
+      for (let c = 0; c < 2; c++) {
+        const d = b.getChannelData(c);
+        for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, decay);
+      }
+      return b;
+    },
+    setOn(v) {
+      this.on = v;
+      if (this.out) this.out.gain.setTargetAtTime(v ? 0.8 : 0, this.ctx.currentTime, 0.02);
+    },
+    tone(f, type, peak, decay, delay = 0, dest) {
+      const ctx = this.ctx;
+      if (!ctx) return;
+      const t = ctx.currentTime + delay, o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(f, t);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(peak, t + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+      o.connect(g); g.connect(dest || this.bus);
+      o.start(t); o.stop(t + decay + 0.05);
+    },
+    note(f, v = 1) {
+      this.tone(f, 'sine', 0.26 * v, 1.5);
+      this.tone(f * 2, 'sine', 0.06 * v, 0.5);
+      this.tone(f * 3, 'triangle', 0.025 * v, 0.12);
+    },
+    bass(chord) { for (const f of BASS_HZ[chord]) this.tone(f, 'triangle', 0.11, 1.6); },
+    sparkle(f) { this.tone(f * 2, 'sine', 0.05, 0.6, 0.05); },
+    clunk() {
+      const ctx = this.ctx;
+      if (!ctx) return;
+      const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(170, t);
+      o.frequency.exponentialRampToValueAtTime(70, t + 0.12);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.2, t + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+      o.connect(g); g.connect(this.out);
+      o.start(t); o.stop(t + 0.2);
+    },
+    finale() {
+      [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => this.tone(f, 'sine', 0.2, 1.8, i * 0.09));
+      this.bass('C');
+      this.tone(2093, 'sine', 0.04, 1.2, 0.36);
+    },
+  };
+
+  // ---------- DOM ----------
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    lessons: $('lessons'), sound: $('soundBtn'), stage: $('stage'), lessonName: $('lessonName'),
+    count: $('noteCount'), flowWord: $('flowWord'), flowFill: $('flowFill'),
+    legendBass: $('legendBass'), legendSparkle: $('legendSparkle'),
+    sky: $('sky'), hint: $('skyHint'), text: $('text'),
+    intro: $('intro'), introLesson: $('introLesson'), introTip: $('introTip'), startBtn: $('startBtn'),
+    results: $('results'), next: $('nextLabel'), kb: $('keyboard'), hands: $('hands'),
+  };
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- Game state ----------
+  const S = {
+    lesson: 0, phase: 'intro', round: 0,
+    text: '', pos: 0, status: [],          // status per letter: 0 waiting, 1 right, 2 wrong, 3 fixed
+    charEls: [], keyEls: {},
+    lastKeyT: null, startT: null, endT: null,
+    gaps: [], beat: 900, outRun: 0,         // recent gaps between keys and their median ("the beat")
+    flow: 0, scores: [], onBreak: false,
+    lastErr: -1, events: [], stats: {}, pxPerMs: 0.07, caps: false, blurred: false,
+  };
+
+  const median = (a) => { const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+  const avg = (a) => a.reduce((x, y) => x + y, 0) / a.length;
+  const pct = (x) => Math.round(x * 100) + '%';
+  const breakMs = () => Math.max(5000, S.beat * 4);
+  const keyName = (k) => (k === ' ' ? 'Space' : k.toUpperCase());
+
+  // ---------- Building the page ----------
+  function buildKeyboard() {
+    for (const row of ROWS) {
+      const r = document.createElement('div');
+      r.className = 'kb-row';
+      r.style.paddingLeft = `calc(var(--u) * ${row.off})`;
+      for (const k of row.keys) r.appendChild(makeKey(k, k.toUpperCase()));
+      els.kb.appendChild(r);
+    }
+    const r = document.createElement('div');
+    r.className = 'kb-row';
+    r.style.paddingLeft = 'calc(var(--u) * 3.25)';
+    const sp = makeKey(' ', '');
+    sp.classList.add('space');
+    r.appendChild(sp);
+    els.kb.appendChild(r);
+  }
+  function makeKey(k, label) {
+    const el = document.createElement('div');
+    el.className = `key f-${FINGER_OF[k]}` + (k === 'f' || k === 'j' ? ' bump' : '');
+    el.textContent = label;
+    S.keyEls[k] = el;
+    return el;
+  }
+
+  function renderLessons() {
+    els.lessons.textContent = '';
+    LESSONS.forEach((L, i) => {
+      const best = saved.best[L.id] || 0;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'lesson' + (i === S.lesson ? ' on' : '');
+      b.setAttribute('aria-pressed', String(i === S.lesson));
+      b.setAttribute('aria-label', `Lesson ${i + 1}, ${L.title}. Best: ${best} of 3 stars.`);
+      b.innerHTML = `<span class="lesson-keys">${L.label}</span><span class="lesson-stars">${
+        [0, 1, 2].map((n) => `<i class="${n < best ? 'on' : ''}">★</i>`).join('')}</span>`;
+      b.addEventListener('click', () => { S.lesson = i; newRound(true, true); });
+      els.lessons.appendChild(b);
+    });
+  }
+
+  function renderText() {
+    els.text.textContent = '';
+    S.charEls = [];
+    const words = S.text.split(' ');
+    words.forEach((w, wi) => {
+      const g = document.createElement('span');
+      g.className = 'word';
+      for (const ch of w) addChar(g, ch);
+      if (wi < words.length - 1) addChar(g, ' ');
+      els.text.appendChild(g);
+    });
+    paintChars();
+  }
+  function addChar(g, ch) {
+    const c = document.createElement('span');
+    c.textContent = ch === ' ' ? ' ' : ch;
+    g.appendChild(c);
+    S.charEls.push(c);
+  }
+  function paintChars() {
+    for (let i = 0; i < S.charEls.length; i++) {
+      const st = S.status[i];
+      S.charEls[i].className = 'ch' + (S.text[i] === ' ' ? ' sp' : '') +
+        (st === 1 ? ' ok' : st === 2 ? ' miss' : st === 3 ? ' fixed' : '') +
+        (i === S.pos && S.phase !== 'done' ? ' cur' : '');
+    }
+  }
+
+  function markLessonKeys() {
+    const live = new Set([...LESSONS[S.lesson].keys, ' ']);
+    for (const [k, el] of Object.entries(S.keyEls)) el.classList.toggle('live', live.has(k));
+  }
+
+  function setFingers(list) {
+    for (const el of els.hands.querySelectorAll('.fg')) el.classList.toggle('on', list.includes(el.dataset.f));
+  }
+
+  function updateNext() {
+    for (const el of Object.values(S.keyEls)) el.classList.remove('next');
+    let html, fingers = [];
+    if (S.phase === 'intro') {
+      S.keyEls.f.classList.add('next');
+      S.keyEls.j.classList.add('next');
+      fingers = ['li', 'ri'];
+      html = 'Fingers on the home row: <span class="keys"><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span><span class="kbd">F</span></span> and <span class="keys"><span class="kbd">J</span><span class="kbd">K</span><span class="kbd">L</span><span class="kbd">;</span></span>';
+    } else if (S.phase === 'play' && S.pos < LEN) {
+      const k = S.text[S.pos], f = FINGER_OF[k];
+      if (S.keyEls[k]) S.keyEls[k].classList.add('next');
+      fingers = [f];
+      html = `Next <span class="kbd">${keyName(k)}</span><span class="dot f-${f}"></span><span class="who">${FINGERS[f]}</span>`;
+      if (S.caps) html += '<span class="warn">Caps Lock is on</span>';
+    } else {
+      html = 'Song finished!';
+    }
+    els.next.innerHTML = html;
+    setFingers(fingers);
+  }
+
+  function updateHud() {
+    const L = LESSONS[S.lesson];
+    els.lessonName.textContent = `Lesson ${S.lesson + 1} · ${L.title}`;
+    els.count.textContent = `${S.pos} of ${LEN} notes`;
+    els.flowFill.style.width = pct(S.flow);
+    els.flowWord.textContent = !S.scores.length ? 'Warming up'
+      : S.flow < 0.35 ? 'Finding the beat'
+      : S.flow < BASS_AT ? 'Getting steady'
+      : S.flow < SPARKLE_AT ? 'Steady'
+      : 'In the flow!';
+    els.legendBass.classList.toggle('lit', S.flow >= BASS_AT);
+    els.legendSparkle.classList.toggle('lit', S.flow >= SPARKLE_AT);
+  }
+
+  function showHint(msg) { els.hint.textContent = msg; els.hint.hidden = false; }
+  function hideHint() { els.hint.hidden = true; }
+  function blurActive() {
+    const a = document.activeElement;
+    if (a && a !== document.body && typeof a.blur === 'function') a.blur();
+  }
+
+  // ---------- Rounds ----------
+  function newRound(withIntro, userAction) {
+    const L = LESSONS[S.lesson];
+    S.round++;
+    S.text = L.words ? makeWords(L.words) : makeDrill(L);
+    S.pos = 0;
+    S.status = new Array(LEN).fill(0);
+    S.lastKeyT = S.startT = S.endT = null;
+    S.gaps = []; S.beat = 900; S.outRun = 0;
+    S.flow = 0; S.scores = []; S.onBreak = false;
+    S.lastErr = -1; S.events = []; S.stats = {};
+    S.phase = withIntro ? 'intro' : 'play';
+    els.results.hidden = true;
+    els.results.textContent = '';
+    els.intro.hidden = !withIntro;
+    hideHint();
+    if (withIntro) {
+      els.introLesson.textContent = `Lesson ${S.lesson + 1} · ${L.title}`;
+      els.introTip.textContent = L.tip;
+    }
+    renderLessons();
+    renderText();
+    markLessonKeys();
+    updateHud();
+    updateNext();
+    if (withIntro && userAction) els.startBtn.focus({ preventScroll: true });
+    else if (!withIntro) blurActive();
+  }
+
+  function startPlay() {
+    Sound.init();
+    S.phase = 'play';
+    els.intro.hidden = true;
+    blurActive();
+    paintChars();
+    updateNext();
+  }
+
+  // ---------- Typing ----------
+  function onType(k, t) {
+    const exp = S.text[S.pos];
+    let kind = 'miss';
+    if (k === exp) kind = 'ok';
+    else if (S.lastErr >= 0 && k === S.text[S.lastErr]) kind = 'fix'; // retyping the letter just missed
+
+    // Rhythm: compare this gap with the typist's own beat.
+    let s = null;
+    if (S.lastKeyT != null) {
+      const gap = t - S.lastKeyT;
+      if (gap <= breakMs()) {
+        const ratio = gap / S.beat;
+        if (S.gaps.length >= 2) {
+          s = Math.exp(-K * Math.abs(Math.log(ratio)));
+          S.scores.push(s);
+          S.flow = S.scores.length === 1 ? 0.3 + 0.4 * s : S.flow + (s - S.flow) * 0.22;
+        }
+        // Stalls and double-taps don't move the beat, unless the pace really changed.
+        const inRange = ratio > 0.4 && ratio < 2.5;
+        S.outRun = inRange ? 0 : S.outRun + 1;
+        if (S.gaps.length < 2 || inRange || S.outRun >= 3) {
+          S.gaps.push(gap);
+          if (S.gaps.length > 8) S.gaps.shift();
+          S.beat = median(S.gaps);
+          S.outRun = 0;
+        }
+        if (ratio > 1.7 && kind !== 'fix' && exp !== ' ') bumpStat(exp, 'slow');
+      }
+      // A gap longer than breakMs() is a break: the beat restarts with no penalty.
+    }
+    S.lastKeyT = t;
+    if (S.startT == null) S.startT = t;
+    if (S.onBreak) { S.onBreak = false; hideHint(); }
+
+    if (kind === 'ok') {
+      S.status[S.pos] = 1;
+      hitNote(S.pos, t, s, false);
+      S.pos++;
+      S.lastErr = -1;
+      flashKey(k, 'press', 120);
+    } else if (kind === 'fix') {
+      S.status[S.lastErr] = 3;
+      hitNote(S.lastErr, t, s, true);
+      S.lastErr = -1;
+      flashKey(k, 'press', 120);
+    } else {
+      S.status[S.pos] = 2;
+      if (exp !== ' ') bumpStat(exp, 'miss');
+      Sound.clunk();
+      S.events.push({ t, kind: 'miss' });
+      S.lastErr = S.pos;
+      S.pos++;
+      flashKey(k, 'oops', 320);
+    }
+    if (S.events.length > 70) S.events.splice(0, S.events.length - 70);
+
+    paintChars();
+    updateHud();
+    if (S.pos >= LEN) finish(t);
+    else updateNext();
+  }
+
+  function hitNote(i, t, s, soft) {
+    const n = MELODY[i];
+    Sound.note(MEL_HZ[n], soft ? 0.6 : 1);
+    if (S.flow >= BASS_AT && i % 2 === 0) Sound.bass(CHORDS[i / 2]);
+    if (S.flow >= SPARKLE_AT) Sound.sparkle(MEL_HZ[n]);
+    S.events.push({ t, kind: 'note', row: ROW_OF[n], s: s == null ? 0.65 : s });
+    floatNote(i);
+  }
+
+  function bumpStat(k, type) {
+    const st = S.stats[k] || (S.stats[k] = { miss: 0, slow: 0 });
+    st[type]++;
+  }
+
+  function flashKey(k, cls, ms) {
+    const el = S.keyEls[k];
+    if (!el) return;
+    el.classList.remove('press', 'oops');
+    void el.offsetWidth; // restart the animation
+    el.classList.add(cls);
+    setTimeout(() => el.classList.remove(cls), ms);
+  }
+
+  function floatNote(i) {
+    if (reduceMotion) return;
+    const c = S.charEls[i];
+    if (!c) return;
+    const sr = els.stage.getBoundingClientRect(), cr = c.getBoundingClientRect();
+    const n = document.createElement('span');
+    n.className = 'float';
+    n.textContent = i % 3 === 0 ? '♫' : '♪';
+    n.style.left = `${cr.left - sr.left + cr.width / 2}px`;
+    n.style.top = `${cr.top - sr.top - 18}px`;
+    els.stage.appendChild(n);
+    setTimeout(() => n.remove(), 950);
+  }
+
+  // ---------- End of song ----------
+  function finish(t) {
+    S.phase = 'done';
+    S.endT = t;
+    const round = S.round;
+    paintChars();
+    updateNext();
+    setTimeout(() => Sound.finale(), 380);
+
+    const right = S.status.filter((v) => v === 1).length;
+    const played = S.status.filter((v) => v === 1 || v === 3).length;
+    const acc = right / LEN;
+    const flow = S.scores.length ? avg(S.scores) : 0;
+    const mins = Math.max((S.endT - S.startT) / 60000, 1 / 60);
+    const wpm = Math.round(played / 5 / mins);
+    let stars = 1;
+    if (flow >= STARS2.flow && acc >= STARS2.acc) stars = 2;
+    if (flow >= STARS3.flow && acc >= STARS3.acc) stars = 3;
+    const tricky = Object.entries(S.stats)
+      .map(([k, v]) => [k, v.miss * 2 + v.slow])
+      .filter(([, score]) => score >= 2)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([k]) => k);
+
+    const id = LESSONS[S.lesson].id;
+    saved.best[id] = Math.max(saved.best[id] || 0, stars);
+    persist();
+    renderLessons();
+
+    setTimeout(() => {
+      if (S.round === round && S.phase === 'done') showResults({ acc, flow, wpm, stars, tricky });
+    }, 1100);
+  }
+
+  const STAR_PATH = 'M12 2.6l2.9 6 6.5.8-4.8 4.5 1.2 6.5L12 17.3l-5.8 3.1 1.2-6.5L2.6 9.4l6.5-.8z';
+
+  function showResults(r) {
+    const last = S.lesson === LESSONS.length - 1;
+    const title = r.stars === 3 ? 'Smooth as starlight!' : r.stars === 2 ? 'Nice steady playing!' : 'You played the whole song!';
+    let tip;
+    if (r.acc < STARS2.acc) tip = 'Slow the beat down a little. A slow, steady beat is better than a fast, bumpy one.';
+    else if (r.flow < STARS2.flow) tip = 'Try to press each key as the faint star reaches the glowing line. Evenly spaced stars mean a smooth beat.';
+    else if (r.flow < STARS3.flow) tip = 'Nice and steady. Look at the next letter while you press this one, and your beat will get even smoother.';
+    else tip = 'That was smooth typing. Play it again a little faster, or move on to the next lesson.';
+    const goal = r.stars === 1 ? `For 2 stars: flow ${pct(STARS2.flow)} and accuracy ${pct(STARS2.acc)}.`
+      : r.stars === 2 ? `For 3 stars: flow ${pct(STARS3.flow)} and accuracy ${pct(STARS3.acc)}.`
+      : 'Three stars. Top marks on this lesson.';
+    const again = '<button type="button" class="btn" id="againBtn" disabled>Play again</button>';
+    const next = `<button type="button" class="btn" id="nextBtn" disabled>${last ? 'Back to lesson 1' : 'Next lesson'}</button>`;
+    const nextFirst = r.stars >= 2;
+
+    els.results.innerHTML = `
+      <div class="card" role="dialog" aria-labelledby="resTitle">
+        <div class="stars-big" role="img" aria-label="${r.stars} of 3 stars">${
+          [0, 1, 2].map((n) => `<svg viewBox="0 0 24 24" class="${n < r.stars ? 'on' : ''}"><path d="${STAR_PATH}"/></svg>`).join('')}</div>
+        <h2 id="resTitle">${title}</h2>
+        <div class="stats">
+          <div class="stat"><b>${pct(r.flow)}</b><span>flow</span></div>
+          <div class="stat"><b>${pct(r.acc)}</b><span>accuracy</span></div>
+          <div class="stat"><b>${r.wpm}</b><span>words per minute</span></div>
+        </div>
+        <p>${tip}</p>
+        ${r.tricky.length ? `<p class="tricky">Keys to practice: ${r.tricky.map((k) => `<span class="kbd">${keyName(k)}</span>`).join('')}</p>` : ''}
+        <p class="goal">${goal}</p>
+        <div class="btn-row">${nextFirst ? next + again : again + next}</div>
+      </div>`;
+    els.results.hidden = false;
+    const againBtn = $('againBtn'), nextBtn = $('nextBtn');
+    (nextFirst ? againBtn : nextBtn).classList.add('ghost');
+    againBtn.addEventListener('click', () => newRound(false));
+    nextBtn.addEventListener('click', () => { S.lesson = last ? 0 : S.lesson + 1; newRound(true, true); });
+    // Short pause so a kid still typing doesn't press a button by accident.
+    setTimeout(() => {
+      againBtn.disabled = false;
+      nextBtn.disabled = false;
+      (nextFirst ? nextBtn : againBtn).focus({ preventScroll: true });
+    }, 900);
+  }
+
+  // ---------- Keyboard input ----------
+  function onKey(e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key;
+    const onButton = e.target && e.target.tagName === 'BUTTON';
+    if (k === 'Escape') {
+      if (S.phase !== 'intro') { e.preventDefault(); newRound(true, true); }
+      return;
+    }
+    if (S.phase === 'intro') {
+      if (onButton && (k === ' ' || k === 'Enter')) return; // the focused button handles it
+      if (k === ' ' || k === 'Enter') { e.preventDefault(); startPlay(); }
+      return;
+    }
+    if (S.phase === 'done') {
+      if (k === ' ' && !onButton) e.preventDefault();
+      return;
+    }
+    // Playing
+    if (k === 'Backspace' || k === 'Tab') { e.preventDefault(); return; }
+    if (k.length !== 1) return;
+    e.preventDefault();
+    if (e.repeat) return;
+    const caps = !!(e.getModifierState && e.getModifierState('CapsLock'));
+    if (caps !== S.caps) S.caps = caps;
+    let t = e.timeStamp;
+    if (!(t > 0) || Math.abs(t - performance.now()) > 1000) t = performance.now();
+    onType(k.toLowerCase(), t);
+  }
+
+  // ---------- Night sky ----------
+  const sky = { ctx: els.sky.getContext('2d'), w: 0, h: 0, bg: [] };
+  for (let i = 0; i < 90; i++) {
+    sky.bg.push({ x: Math.random(), y: Math.random(), r: 0.4 + Math.random() * 1.1, p: Math.random() * 6.28, sp: 0.6 + Math.random() * 1.4 });
+  }
+  const css = getComputedStyle(document.documentElement);
+  const C = {
+    star: css.getPropertyValue('--star').trim() || '#ffd56a',
+    paper: css.getPropertyValue('--paper').trim() || '#eef1fb',
+    miss: css.getPropertyValue('--miss').trim() || '#ff7b7b',
+  };
+
+  function sizeSky() {
+    const r = els.sky.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    sky.w = r.width;
+    sky.h = r.height;
+    els.sky.width = Math.max(1, Math.round(r.width * dpr));
+    els.sky.height = Math.max(1, Math.round(r.height * dpr));
+    sky.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function rowY(r) {
+    const top = 24, bottom = sky.h - 32;
+    return bottom - (r / 5) * (bottom - top);
+  }
+
+  function starPath(ctx, x, y, r) {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 ? r * 0.45 : r;
+      ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+    }
+    ctx.closePath();
+  }
+
+  function drawStar(x, y, r, alpha) {
+    const ctx = sky.ctx;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = C.star;
+    ctx.shadowColor = C.star;
+    ctx.shadowBlur = r * 2;
+    starPath(ctx, x, y, r);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawSky(now) {
+    const { ctx, w, h } = sky;
+    if (!w) return;
+    ctx.clearRect(0, 0, w, h);
+
+    // Background stars drift slowly and twinkle.
+    const drift = reduceMotion ? 0 : now * 0.008;
+    ctx.fillStyle = C.paper;
+    for (const b of sky.bg) {
+      let x = (b.x * w - drift * b.r) % w;
+      if (x < 0) x += w;
+      ctx.globalAlpha = reduceMotion ? 0.4 : 0.2 + 0.3 * (0.5 + 0.5 * Math.sin(now * 0.0015 * b.sp + b.p));
+      ctx.beginPath();
+      ctx.arc(x, b.y * h, b.r, 0, 6.283);
+      ctx.fill();
+    }
+
+    // Faint guide lines, one per pitch, like a music box strip.
+    ctx.globalAlpha = 0.06;
+    ctx.strokeStyle = C.paper;
+    ctx.lineWidth = 1;
+    for (let r = 0; r < 6; r++) {
+      const y = Math.round(rowY(r)) + 0.5;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    }
+
+    // The glowing line where notes land.
+    const playX = Math.round(w * 0.72);
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, 'rgba(255,213,106,0)');
+    g.addColorStop(0.5, 'rgba(255,213,106,0.55)');
+    g.addColorStop(1, 'rgba(255,213,106,0)');
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = g;
+    ctx.fillRect(playX - 1, 6, 2, h - 12);
+
+    const pxPerBeat = Math.max(38, Math.min(70, w / 13));
+    let xOf, notes;
+    if (S.phase === 'intro') {
+      // Demo: what a steady beat looks like.
+      notes = MELODY.slice(0, 16).map((n, i) => ({ x: playX - (16 - i) * pxPerBeat * 0.8, row: ROW_OF[n], s: 0.9, t: -1e9 }));
+      xOf = (ev) => ev.x;
+    } else {
+      S.pxPerMs += (pxPerBeat / S.beat - S.pxPerMs) * 0.06;
+      const ref = S.phase === 'done' ? S.endT : now;
+      notes = S.events;
+      xOf = (ev) => playX - (ref - ev.t) * S.pxPerMs;
+    }
+
+    // Constellation lines between notes.
+    ctx.globalAlpha = 0.35;
+    ctx.strokeStyle = C.star;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    let started = false;
+    for (const ev of notes) {
+      if (ev.kind === 'miss') continue;
+      const x = xOf(ev), y = rowY(ev.row);
+      if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    for (const ev of notes) {
+      const x = xOf(ev);
+      if (x < -30 || x > w + 30) continue;
+      if (ev.kind === 'miss') {
+        ctx.globalAlpha = 0.7;
+        ctx.fillStyle = C.miss;
+        ctx.beginPath();
+        ctx.arc(x, h - 12, 3.2, 0, 6.283);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        continue;
+      }
+      const age = now - ev.t;
+      const pop = !reduceMotion && age >= 0 && age < 260 ? 1 + 0.6 * (1 - age / 260) : 1;
+      drawStar(x, rowY(ev.row), (4 + 7 * ev.s) * pop, 0.45 + 0.55 * ev.s);
+    }
+
+    // Ghost star: where and when the next note is due.
+    if (S.phase === 'play' && S.pos < LEN) {
+      let x = playX;
+      if (S.lastKeyT != null && !S.onBreak) x = Math.max(playX, playX + (S.lastKeyT + S.beat - now) * S.pxPerMs);
+      const waiting = x <= playX + 0.5;
+      const pulse = reduceMotion ? 0.8 : 0.55 + 0.35 * Math.sin(now * 0.008);
+      ctx.save();
+      ctx.globalAlpha = waiting ? pulse : 0.5;
+      ctx.strokeStyle = C.star;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([3, 3]);
+      starPath(ctx, x, rowY(ROW_OF[MELODY[S.pos]]), 10);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function frame(now) {
+    drawSky(now);
+    if (S.phase === 'play' && S.lastKeyT != null && !S.onBreak && now - S.lastKeyT > breakMs()) {
+      S.onBreak = true;
+      showHint('Take your time. Find the glowing key, then keep the beat going.');
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Wiring ----------
+  function setSoundButton() {
+    els.sound.setAttribute('aria-pressed', String(Sound.on));
+    els.sound.setAttribute('aria-label', Sound.on ? 'Sound is on. Turn it off.' : 'Sound is off. Turn it on.');
+  }
+
+  function start(data) {
+    if (data && Number.isInteger(data.lesson) && data.lesson >= 0 && data.lesson < LESSONS.length) S.lesson = data.lesson;
+    buildKeyboard();
+    setSoundButton();
+    newRound(true, false);
+
+    els.startBtn.addEventListener('click', startPlay);
+    els.sound.addEventListener('click', () => {
+      Sound.init();
+      Sound.setOn(!Sound.on);
+      saved.sound = Sound.on;
+      persist();
+      setSoundButton();
+      if (S.phase === 'play') blurActive();
+    });
+    document.addEventListener('keydown', onKey);
+    els.stage.addEventListener('click', () => { if (S.phase === 'play') window.focus(); });
+    window.addEventListener('blur', () => {
+      if (S.phase === 'play') { S.blurred = true; showHint('Click the game to keep typing.'); }
+    });
+    window.addEventListener('focus', () => {
+      if (S.blurred) { S.blurred = false; if (!S.onBreak) hideHint(); }
+    });
+
+    if (typeof ResizeObserver === 'function') new ResizeObserver(sizeSky).observe(els.sky);
+    else window.addEventListener('resize', sizeSky);
+    sizeSky();
+    requestAnimationFrame(frame);
+  }
+
+  if (window.claude && window.claude.hot && typeof window.claude.hot.snapshot === 'function') {
+    window.claude.hot.snapshot(() => ({ lesson: S.lesson }));
+  }
+  if (window.claude && window.claude.hot && typeof window.claude.hot.ready === 'function') window.claude.hot.ready(start);
+  else start((window.claude && window.claude.hot && window.claude.hot.data) || {});
+})();
+</script>
+</body>
+</html>
