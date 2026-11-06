@@ -5,295 +5,364 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Type a Tune</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="A home-row typing game for kids. Every key plays the next note of a song, and a steady beat lights up the stars.">
+<meta name="description" content="A touch-typing trainer that scores rhythm. Every correct key plays the next note of a song, so an even pace sounds like music.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Grandstander:wght@600;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: one night-sky stage. Typing draws the song as a constellation in the sky strip,
-   the words sit on the horizon below it, and the keyboard and hands are the ground. */
+/* Layout: a training tool. Lesson list on the left, the exercise in the middle
+   (live metrics, a timing chart that plots every keystroke against the typist's
+   own beat, the text), and the keyboard with a finger map underneath. */
 :root {
-  --sky-0: #0a1430;      /* deep night */
-  --sky-1: #1a2a55;      /* horizon glow */
-  --panel: #121e40;
-  --line: #2b3b6b;
-  --ink: #050b1c;        /* shadows */
-  --paper: #eef1fb;      /* text */
-  --muted: #8d9ac2;
-  --star: #ffd56a;       /* accent: starlight */
-  --miss: #ff7b7b;
-  --fix: #ffb35c;
-  --f-pinky: #ff92c2;    /* one color per finger, same on both hands */
-  --f-ring: #ffb070;
-  --f-middle: #c8e86e;
-  --f-index: #71d4ff;
-  --f-thumb: #b9a6ff;
-  --font-display: "Grandstander", "Trebuchet MS", system-ui, sans-serif;
-  --font-body: "Andika", "Verdana", "Segoe UI", system-ui, sans-serif; /* Andika: made for beginning readers */
+  --bg: #f3f5f5;
+  --surface: #ffffff;
+  --surface-2: #f7f9f9;
+  --border: #dde3e3;
+  --border-strong: #c3cccc;
+  --text: #142022;
+  --text-2: #55656a;
+  --text-3: #85928f;
+  --accent: #008f86;          /* on beat; validated with --early and --late */
+  --accent-strong: #00756e;   /* buttons and the next key, white text */
+  --accent-soft: #e2f2f0;
+  --on-accent: #ffffff;
+  --early: #6250d6;
+  --late: #eb6834;
+  --miss: #d03b3b;
+  --fix: #a35f00;
+  --f-pinky: #c2577f;         /* finger zones */
+  --f-ring: #c07a1e;
+  --f-middle: #5f8f2a;
+  --f-index: #2f74b5;
+  --f-thumb: #6d5fb5;
+  --shadow: rgba(20, 32, 34, 0.12);
+  --font-sans: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1314;
+    --surface: #161c1e;
+    --surface-2: #1b2224;
+    --border: #283234;
+    --border-strong: #3a474a;
+    --text: #e5ecec;
+    --text-2: #9eadaf;
+    --text-3: #6f7e80;
+    --accent: #1fa2ad;
+    --accent-strong: #1fa2ad;
+    --accent-soft: #15343a;
+    --on-accent: #071012;
+    --early: #9085e9;
+    --late: #d95926;
+    --miss: #ef6b6b;
+    --fix: #e0a040;
+    --f-pinky: #e08aac;
+    --f-ring: #e0a75a;
+    --f-middle: #9cc061;
+    --f-index: #6aa8e0;
+    --f-thumb: #a596dc;
+    --shadow: rgba(0, 0, 0, 0.45);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1314;
+  --surface: #161c1e;
+  --surface-2: #1b2224;
+  --border: #283234;
+  --border-strong: #3a474a;
+  --text: #e5ecec;
+  --text-2: #9eadaf;
+  --text-3: #6f7e80;
+  --accent: #1fa2ad;
+  --accent-strong: #1fa2ad;
+  --accent-soft: #15343a;
+  --on-accent: #071012;
+  --early: #9085e9;
+  --late: #d95926;
+  --miss: #ef6b6b;
+  --fix: #e0a040;
+  --f-pinky: #e08aac;
+  --f-ring: #e0a75a;
+  --f-middle: #9cc061;
+  --f-index: #6aa8e0;
+  --f-thumb: #a596dc;
+  --shadow: rgba(0, 0, 0, 0.45);
   color-scheme: dark;
 }
+
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-html { background: var(--sky-0); }
+html { background: var(--bg); }
 body {
   margin: 0;
-  background: var(--sky-0);
-  color: var(--paper);
-  font-family: var(--font-body);
-  font-size: 16px;
-  line-height: 1.45;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 15px/1.5 var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
-button { font: inherit; color: inherit; }
+button, select, textarea { font: inherit; color: inherit; }
+h1, h2, p { margin: 0; }
 
-.app {
-  max-width: 980px;
+.shell {
+  max-width: 1320px;
   margin: 0 auto;
-  padding-block: 14px 28px;
+  padding-block: 16px 28px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  display: grid;
+  grid-template-columns: 272px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.label {
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-3);
 }
 
-/* ---------- Header ---------- */
-.top { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
-.brand {
-  display: flex; align-items: center; gap: 8px;
-  margin: 0 auto 0 0;
-  font: 800 26px/1 var(--font-display);
-  letter-spacing: 0.01em;
+/* ---------- Sidebar ---------- */
+.sidebar {
+  position: sticky; top: calc(16px + env(safe-area-inset-top, 0px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 16px 12px 14px;
+  display: flex; flex-direction: column; gap: 14px;
 }
-.brand svg { width: 26px; height: 26px; }
-.brand svg path { fill: var(--star); }
-.lessons { display: flex; flex-wrap: wrap; gap: 6px; }
-.lesson {
-  display: flex; flex-direction: column; align-items: center; gap: 1px;
-  min-width: 54px;
-  padding: 6px 10px 4px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--panel);
-  color: var(--muted);
+.brand { display: flex; align-items: center; gap: 9px; padding: 0 6px; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.brand svg { width: 22px; height: 22px; flex: none; }
+.brand rect { fill: var(--accent); }
+.progress-line { padding: 0 6px; font-size: 13px; color: var(--text-2); }
+.progress-line b { color: var(--text); font-weight: 600; }
+.nav-group { display: flex; flex-direction: column; gap: 2px; }
+.nav-head { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 6px 4px; }
+.nav-head span:last-child { font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.nav-item {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  text-align: left;
   cursor: pointer;
 }
-.lesson:hover { color: var(--paper); }
-.lesson.on {
-  color: var(--paper);
-  border-color: var(--star);
-  background: color-mix(in srgb, var(--star) 12%, var(--panel));
+.nav-item:hover { background: var(--surface-2); }
+.nav-item.on { background: var(--accent-soft); }
+.nav-item.on .ni-title { color: var(--text); font-weight: 600; }
+.ni-keys { font: 500 13px/1 var(--font-mono); color: var(--text); white-space: nowrap; }
+.ni-title { font-size: 13.5px; line-height: 1.3; color: var(--text-2); }
+.level { display: inline-flex; gap: 2px; align-items: flex-end; }
+.level i { display: block; width: 4px; height: 11px; border-radius: 2px; background: var(--border-strong); }
+.level i.on { background: var(--accent); }
+
+/* ---------- Main column ---------- */
+.main { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 16px; padding: 2px 2px 0; }
+.title-block { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.title-block h1 { font-size: 22px; line-height: 1.2; font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; }
+.controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field select {
+  height: 38px;
+  max-width: 100%;
+  padding: 0 32px 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 14px;
+  cursor: pointer;
 }
-.lesson-keys { font: 700 15px/1.1 var(--font-body); letter-spacing: 0.06em; white-space: nowrap; }
-.lesson-stars { font-size: 11px; line-height: 1; letter-spacing: 1px; }
-.lesson-stars i { font-style: normal; opacity: 0.3; }
-.lesson-stars i.on { color: var(--star); opacity: 1; }
 .icon-btn {
-  width: 42px; height: 42px;
+  width: 38px; height: 38px; flex: none;
   display: grid; place-items: center;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
   cursor: pointer;
 }
-.icon-btn svg { width: 22px; height: 22px; }
-.icon-btn path { fill: none; stroke: var(--paper); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.icon-btn .spk { fill: var(--paper); }
+.icon-btn svg { width: 20px; height: 20px; }
+.icon-btn path { fill: none; stroke: var(--text-2); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.icon-btn .spk { fill: var(--text-2); stroke: none; }
 .icon-btn[aria-pressed="false"] .waves { display: none; }
 .icon-btn[aria-pressed="true"] .mute { display: none; }
+.mobile-only { display: none; }
 
-/* ---------- Stage ---------- */
-.stage {
-  position: relative;
-  min-height: 456px;
-  display: flex; flex-direction: column; gap: 6px;
-  padding: 14px 18px 16px;
-  border: 1px solid var(--line);
-  border-radius: 22px;
-  background: linear-gradient(180deg, var(--sky-0) 0%, var(--sky-1) 100%);
-  overflow: hidden;
+/* ---------- Exercise ---------- */
+.exercise { position: relative; min-height: 500px; overflow: hidden; display: flex; flex-direction: column; }
+.metrics {
+  display: grid; grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
+  border-bottom: 1px solid var(--border);
 }
-.stage-head {
-  position: relative; z-index: 1;
-  display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap;
-  gap: 10px 20px;
-}
-.eyebrow {
-  margin: 0;
-  font-size: 12px; font-weight: 700;
-  letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--muted);
-}
-.now { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.song { font: 700 19px/1.2 var(--font-display); }
-.count { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.flow { width: min(300px, 100%); }
-.flow-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-#flowWord { font: 700 15px/1.2 var(--font-display); color: var(--star); }
-.meter {
-  position: relative;
-  height: 12px;
-  margin-top: 6px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--paper) 10%, transparent);
-}
-.meter .fill {
-  position: absolute; inset: 0 auto 0 0;
-  width: 0%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--star) 40%, var(--sky-1)), var(--star));
-  box-shadow: 0 0 12px color-mix(in srgb, var(--star) 45%, transparent);
-  transition: width 0.25s ease-out;
-}
-.notch {
-  position: absolute; top: -3px; bottom: -3px;
-  width: 2px; margin-left: -1px;
-  border-radius: 1px;
-  background: var(--paper);
-  opacity: 0.5;
-}
-.flow-legend { position: relative; height: 16px; margin-top: 3px; font-size: 12px; color: var(--muted); }
-.flow-legend span { position: absolute; transform: translateX(-50%); white-space: nowrap; transition: color 0.2s; }
-.flow-legend span.lit { color: var(--star); }
+.metric { display: flex; flex-direction: column; gap: 3px; padding: 12px 16px; min-width: 0; }
+.metric + .metric { border-left: 1px solid var(--border); }
+.metric-value { display: flex; align-items: baseline; gap: 6px; font-size: 24px; font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.metric-value small { font-size: 13px; font-weight: 500; color: var(--text-2); }
+.flow-row { display: flex; align-items: center; gap: 12px; }
+.meter { position: relative; flex: 1; height: 8px; border-radius: 999px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border); }
+.meter .fill { position: absolute; inset: 0 auto 0 0; width: 0%; border-radius: inherit; background: var(--accent); transition: width 0.25s ease-out; }
+.notch { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--text-3); }
+.flow-note { font-size: 12px; color: var(--text-3); }
+.flow-note b { font-weight: 500; color: var(--text-3); }
+.flow-note b.lit { color: var(--accent); }
 
-.sky-wrap { position: relative; height: 168px; margin-inline: -18px; }
-#sky { display: block; width: 100%; height: 100%; }
-.sky-hint {
-  position: absolute; left: 50%; top: 10px;
-  transform: translateX(-50%);
-  width: max-content; max-width: calc(100% - 32px);
-  padding: 6px 14px;
-  border: 1px solid var(--line);
+.rhythm { position: relative; padding: 10px 16px 0; }
+.rhythm-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 16px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--text-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { display: inline-block; width: 14px; height: 8px; border-radius: 4px; }
+.sw.on { background: var(--accent); }
+.sw.early { background: var(--early); }
+.sw.late { background: var(--late); }
+.sw.warm { background: var(--text-3); }
+.sw.next { background: transparent; border: 1.5px dashed var(--text-2); }
+.sw.miss { width: 10px; height: 10px; border-radius: 0; background:
+  linear-gradient(45deg, transparent 42%, var(--miss) 42%, var(--miss) 58%, transparent 58%),
+  linear-gradient(-45deg, transparent 42%, var(--miss) 42%, var(--miss) 58%, transparent 58%); }
+.chart-wrap { position: relative; height: 150px; margin-top: 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); overflow: hidden; }
+#rhythm { display: block; width: 100%; height: 100%; }
+.chart-hint {
+  position: absolute; left: 50%; top: 10px; transform: translateX(-50%);
+  width: max-content; max-width: calc(100% - 24px);
+  padding: 5px 12px;
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--sky-0) 85%, transparent);
-  font-size: 14px;
-  text-align: center;
+  background: var(--surface);
+  box-shadow: 0 2px 8px var(--shadow);
+  font-size: 13px; text-align: center;
 }
 
 .text {
-  display: flex; flex-wrap: wrap; justify-content: center; align-content: flex-start;
-  min-height: 3.1em;
-  font: 400 clamp(24px, 4.4vw, 40px)/1.55 var(--font-body);
-  letter-spacing: 0.03em;
+  flex: 1;
+  display: flex; flex-wrap: wrap; justify-content: center; align-content: center;
+  min-height: 3.6em;
+  padding: 18px 20px 22px;
+  font: 400 clamp(21px, 3vw, 31px)/1.75 var(--font-mono);
 }
 .word { display: flex; }
-.ch {
-  position: relative;
-  display: inline-block;
-  padding: 0 0.04em;
-  border-radius: 6px;
-  transition: color 0.15s;
-}
-.ch.sp { width: 0.55em; }
+.ch { position: relative; display: inline-block; padding: 0 0.02em; border-radius: 3px; }
+.ch.sp { width: 0.62em; }
 .ch.sp::after {
   content: "";
-  position: absolute; left: 50%; top: 58%;
-  width: 6px; height: 6px; margin: -3px;
+  position: absolute; left: 50%; top: 56%;
+  width: 4px; height: 4px; margin: -2px;
   border-radius: 50%;
-  background: var(--muted);
-  opacity: 0.45;
+  background: var(--text-3);
+  opacity: 0.6;
 }
-.ch.ok { color: var(--muted); opacity: 0.75; }
-.ch.miss { color: var(--miss); text-decoration: underline wavy var(--miss) 2px; text-underline-offset: 6px; }
+.ch.ok { color: var(--text-3); }
+.ch.miss { color: var(--miss); text-decoration: underline 2px var(--miss); text-underline-offset: 6px; }
 .ch.sp.miss::after { background: var(--miss); opacity: 1; }
 .ch.fixed { color: var(--fix); }
 .ch.sp.fixed::after { background: var(--fix); opacity: 1; }
-.ch.cur {
-  color: var(--star);
-  background: color-mix(in srgb, var(--star) 16%, transparent);
-  box-shadow: inset 0 -3px 0 var(--star);
-}
-.ch.sp.cur::after { background: var(--star); opacity: 1; }
+.ch.cur { background: var(--accent-soft); box-shadow: inset 0 -2px 0 var(--accent); }
+.ch.sp.cur::after { background: var(--accent); opacity: 1; }
 
-.float {
-  position: absolute; z-index: 3;
-  pointer-events: none;
-  font-size: 22px;
-  color: var(--star);
-  text-shadow: 0 0 10px color-mix(in srgb, var(--star) 70%, transparent);
-  animation: rise 0.9s ease-out forwards;
-}
-@keyframes rise {
-  from { opacity: 1; transform: translate(-50%, 0) scale(0.8); }
-  to { opacity: 0; transform: translate(-50%, -48px) scale(1.15); }
-}
-
-/* ---------- Overlays ---------- */
+/* ---------- Dialogs over the exercise ---------- */
 .overlay {
   position: absolute; inset: 0; z-index: 5;
   display: grid; place-items: center;
   padding: 16px;
   overflow: auto;
-  background: color-mix(in srgb, var(--sky-0) 50%, transparent);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  backdrop-filter: blur(2px);
 }
 .card {
-  width: min(540px, 100%);
+  width: min(580px, 100%);
   display: flex; flex-direction: column; gap: 12px;
-  padding: 22px 24px;
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  background: color-mix(in srgb, var(--panel) 94%, transparent);
-  box-shadow: 0 20px 60px color-mix(in srgb, var(--ink) 70%, transparent);
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 12px 40px var(--shadow);
 }
-.card h2 { margin: 0; font: 800 26px/1.15 var(--font-display); text-wrap: balance; }
-.card p { margin: 0; }
-.howto { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; }
-.howto li::marker { color: var(--star); }
-.muted { color: var(--muted); }
-.btn-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-top: 4px; }
+.card h2 { font-size: 20px; line-height: 1.25; font-weight: 600; text-wrap: balance; }
+.steps { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 4px; color: var(--text-2); }
+.steps strong { color: var(--text); font-weight: 600; }
+.muted { color: var(--text-2); }
+.small { font-size: 13px; }
+.custom { display: flex; flex-direction: column; gap: 6px; }
+#customWords {
+  width: 100%;
+  min-height: 84px;
+  padding: 10px 12px;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  font: 400 16px/1.5 var(--font-mono);
+}
+#customWords::placeholder { color: var(--text-3); }
+.btn-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 2px; }
 .btn {
-  padding: 12px 20px;
-  border: 0;
-  border-radius: 14px;
-  background: var(--star);
-  color: var(--sky-0);
-  font: 700 17px/1 var(--font-display);
-  box-shadow: 0 4px 0 color-mix(in srgb, var(--star) 45%, var(--ink));
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid var(--accent-strong);
+  border-radius: 8px;
+  background: var(--accent-strong);
+  color: var(--on-accent);
+  font-size: 14px; font-weight: 600;
   cursor: pointer;
 }
-.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 color-mix(in srgb, var(--star) 45%, var(--ink)); }
-.btn.ghost { background: transparent; color: var(--paper); border: 1px solid var(--line); box-shadow: none; }
-.btn:disabled { opacity: 0.5; cursor: default; }
-.btn:focus-visible, .lesson:focus-visible, .icon-btn:focus-visible { outline: 3px solid var(--f-index); outline-offset: 2px; }
+.btn:hover { filter: brightness(1.06); }
+.btn.secondary { background: var(--surface); color: var(--text); border-color: var(--border-strong); }
+.btn.mini { height: 30px; padding: 0 10px; font-size: 13px; }
+.btn:disabled { opacity: 0.45; cursor: default; filter: none; }
+.btn:focus-visible, .nav-item:focus-visible, .icon-btn:focus-visible, .field select:focus-visible, #customWords:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
 .kbd {
   display: inline-grid; place-items: center;
-  min-width: 1.7em; height: 1.7em;
+  min-width: 1.75em; height: 1.75em;
   padding: 0 0.4em;
-  border: 1px solid var(--line);
-  border-bottom-width: 3px;
-  border-radius: 6px;
-  background: var(--panel);
-  color: var(--paper);
-  font-size: 0.85em; font-weight: 700; line-height: 1;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--text);
+  font: 500 0.82em/1 var(--font-mono);
 }
 .keys { display: inline-flex; gap: 3px; }
 
-.stars-big { display: flex; gap: 6px; }
-.stars-big svg { width: 46px; height: 46px; }
-.stars-big path { stroke: var(--star); stroke-width: 1.6; stroke-linejoin: round; fill: none; }
-.stars-big .on path { fill: var(--star); }
-.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.stat { padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--paper) 6%, transparent); }
-.stat b { display: block; font: 800 26px/1.1 var(--font-display); font-variant-numeric: tabular-nums; }
-.stat span { font-size: 13px; color: var(--muted); }
-.tricky { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--muted); }
-.goal { font-size: 14px; color: var(--muted); }
+.res-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.badge { flex: none; padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2); }
+.badge.l2, .badge.l3 { background: var(--accent-soft); border-color: transparent; color: var(--text); }
+.badge .level { margin-right: 7px; vertical-align: -1px; }
+.res-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--border); border-radius: 8px; }
+.res-stats > div { padding: 9px 12px; }
+.res-stats > div + div { border-left: 1px solid var(--border); }
+.res-stats b { display: block; font-size: 22px; font-weight: 600; line-height: 1.2; }
+.res-stats span { font-size: 12px; color: var(--text-2); }
+.timing { display: flex; flex-direction: column; gap: 6px; }
+.seg { display: flex; gap: 2px; height: 28px; }
+.seg > div { min-width: 0; display: flex; align-items: center; padding: 0 8px; border-radius: 4px; font: 600 12px/1 var(--font-sans); white-space: nowrap; overflow: visible; }
+.seg .early { background: var(--early); }
+.seg .on { background: var(--accent); }
+.seg .late { background: var(--late); }
+.tricky { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--text-2); }
+.tricky .btn { margin-left: 4px; }
 
-/* ---------- Keyboard and hands ---------- */
-.kb-area {
-  --u: min(50px, calc((100vw - 72px) / 14));
-  display: flex; flex-direction: column; align-items: center; gap: 10px;
+/* ---------- Keyboard and finger map ---------- */
+.kb-panel { container-type: inline-size; padding: 14px 16px 16px; }
+.kb-wrap {
+  --u: min(46px, calc((100cqi - 4px) / 14));
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
 }
 .next {
-  margin: 0;
   min-height: 1.9em;
   display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px;
   text-align: center;
-  color: var(--muted);
+  color: var(--text-2);
 }
-.next .who { color: var(--paper); font-weight: 700; }
-.warn { color: var(--fix); font-weight: 700; }
-.dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--fc); }
+.next .who { color: var(--text); font-weight: 600; }
+.warn { color: var(--fix); font-weight: 600; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--fc); }
 .keyboard { display: flex; flex-direction: column; gap: calc(var(--u) * 0.12); }
 .kb-row { display: flex; gap: calc(var(--u) * 0.12); }
 .f-lp, .f-rp { --fc: var(--f-pinky); }
@@ -305,92 +374,68 @@ button { font: inherit; color: inherit; }
   position: relative;
   width: var(--u); height: var(--u);
   display: grid; place-items: center;
-  border: 1px solid color-mix(in srgb, var(--fc) 22%, var(--line));
-  border-bottom-width: calc(var(--u) * 0.08);
-  border-radius: calc(var(--u) * 0.2);
-  background: color-mix(in srgb, var(--fc) 8%, var(--panel));
-  color: color-mix(in srgb, var(--muted) 70%, transparent);
-  font: 700 calc(var(--u) * 0.4)/1 var(--font-body);
-  transition: transform 0.08s, background 0.12s, color 0.12s;
+  border: 1px solid var(--border);
+  border-bottom: 3px solid color-mix(in srgb, var(--fc) 45%, var(--border));
+  border-radius: calc(var(--u) * 0.14);
+  background: var(--surface);
+  color: var(--text-3);
+  font: 500 calc(var(--u) * 0.36)/1 var(--font-mono);
+  transition: transform 0.06s;
 }
-.key.live {
-  color: var(--paper);
-  background: color-mix(in srgb, var(--fc) 24%, var(--panel));
-  border-color: color-mix(in srgb, var(--fc) 60%, transparent);
-}
+.key.live { color: var(--text); background: color-mix(in srgb, var(--fc) 10%, var(--surface)); border-bottom-color: var(--fc); }
+.key.fresh { box-shadow: inset 0 0 0 1.5px var(--fc); }
 .key.next {
-  background: var(--fc);
-  color: var(--sky-0);
-  transform: translateY(-2px);
-  animation: breathe 1.4s ease-in-out infinite;
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  border-bottom-color: var(--fc);
+  color: var(--on-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
 }
-.key.press { transform: translateY(2px); border-bottom-width: 1px; }
-.key.oops { background: var(--miss); color: var(--sky-0); animation: shake 0.28s; }
+.key.press { transform: translateY(1px); }
+.key.oops { background: var(--miss); border-color: var(--miss); color: var(--surface); }
 .key.bump::after {
   content: "";
-  position: absolute; bottom: 16%; left: 36%; right: 36%;
-  height: 2px;
-  border-radius: 2px;
-  background: currentColor;
-  opacity: 0.7;
+  position: absolute; bottom: 17%; left: 38%; right: 38%;
+  height: 2px; border-radius: 1px;
+  background: currentColor; opacity: 0.6;
 }
 .key.space { width: calc(var(--u) * 6.2); }
-@keyframes breathe {
-  0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--fc) 35%, transparent), 0 0 14px color-mix(in srgb, var(--fc) 45%, transparent); }
-  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--fc) 22%, transparent), 0 0 26px color-mix(in srgb, var(--fc) 70%, transparent); }
-}
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-3px); }
-  75% { transform: translateX(3px); }
-}
 
-.hands { display: flex; justify-content: center; gap: calc(var(--u) * 1.5); padding-top: 4px; }
-.hand { position: relative; width: calc(var(--u) * 3.4); height: calc(var(--u) * 1.9); }
-.fingers {
-  position: absolute; left: 0; right: 0; bottom: calc(var(--u) * 0.5);
-  height: calc(var(--u) * 1.35);
-  display: flex; justify-content: space-between; align-items: flex-end;
-  padding: 0 5%;
+.fingermap { width: min(100%, calc(var(--u) * 13.4)); display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 3px; }
+.fm {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 5px 2px 6px;
+  border-top: 3px solid var(--fc);
+  border-radius: 0 0 5px 5px;
+  background: var(--surface-2);
+  font-size: 12px; line-height: 1.2; color: var(--text-3); text-align: center;
 }
-.fg {
-  display: block;
-  width: 20%;
-  border: 2px solid color-mix(in srgb, var(--fc) 50%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--fc) 22%, var(--panel));
-  transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
-}
-.fg.on {
-  background: var(--fc);
-  border-color: var(--fc);
-  transform: translateY(-6px);
-  box-shadow: 0 0 18px color-mix(in srgb, var(--fc) 70%, transparent);
-}
-.f-lp.fg, .f-rp.fg { height: 58%; }
-.f-lr.fg, .f-rr.fg { height: 82%; }
-.f-lm.fg, .f-rm.fg { height: 94%; }
-.f-li.fg, .f-ri.fg { height: 80%; }
-.palm {
-  position: absolute; left: 3%; right: 3%; bottom: 0;
-  height: calc(var(--u) * 0.72);
-  border-radius: 40% 40% 46% 46% / 50% 50% 60% 60%;
-  background: color-mix(in srgb, var(--paper) 9%, var(--panel));
-}
-.fg.thumb { position: absolute; bottom: 4%; width: 19%; height: 58%; }
-.hand.left .thumb { right: -10%; transform: rotate(52deg); }
-.hand.right .thumb { left: -10%; transform: rotate(-52deg); }
-.hand.left .thumb.on { transform: rotate(52deg) translateY(-6px); }
-.hand.right .thumb.on { transform: rotate(-52deg) translateY(-6px); }
+.fm b { font-weight: 500; font-size: 11px; }
+.fm.on { background: color-mix(in srgb, var(--fc) 16%, var(--surface)); color: var(--text); font-weight: 600; }
 
-.foot { margin: 0; text-align: center; font-size: 14px; color: var(--muted); }
+.foot { text-align: center; font-size: 13px; color: var(--text-3); }
 
-@media (max-width: 560px) {
-  .stage { min-height: 600px; padding: 12px 14px 14px; }
-  .sky-wrap { margin-inline: -14px; height: 140px; }
-  .card { padding: 18px; }
-  .card h2 { font-size: 22px; }
-  .stat b { font-size: 21px; }
+@media (max-width: 900px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .sidebar { display: none; }
+  .mobile-only { display: flex; }
+  .toolbar { align-items: stretch; flex-direction: column; }
+  .controls { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+  .field select { width: 100%; }
+}
+@media (max-width: 600px) {
+  .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .metric-flow { grid-column: 1 / -1; border-bottom: 1px solid var(--border); }
+  .metric + .metric { border-left: 0; }
+  .metric:nth-child(n+3) { border-left: 1px solid var(--border); }
+  .metric { padding: 10px 12px; }
+  .metric-value { font-size: 20px; }
+  .exercise { min-height: 640px; }
+  .res-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .res-stats > div:nth-child(3) { border-left: 0; }
+  .res-stats > div:nth-child(n+3) { border-top: 1px solid var(--border); }
+  .fm b { display: none; }
+  .fm { font-size: 10px; padding-inline: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -398,108 +443,173 @@ button { font: inherit; color: inherit; }
 </style>
 </head>
 <body>
-<div class="app">
-  <header class="top">
-    <h1 class="brand">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.9 6 6.5.8-4.8 4.5 1.2 6.5L12 17.3l-5.8 3.1 1.2-6.5L2.6 9.4l6.5-.8z"/></svg>
+<div class="shell">
+  <aside class="sidebar panel" aria-label="Lessons">
+    <div class="brand">
+      <svg viewBox="0 0 22 22" aria-hidden="true"><rect x="1" y="9" width="3.2" height="10" rx="1.6"/><rect x="6.6" y="4" width="3.2" height="15" rx="1.6"/><rect x="12.2" y="7" width="3.2" height="12" rx="1.6"/><rect x="17.8" y="2" width="3.2" height="17" rx="1.6"/></svg>
       Type a Tune
-    </h1>
-    <nav class="lessons" id="lessons" aria-label="Lessons"></nav>
-    <button type="button" class="icon-btn" id="soundBtn" aria-pressed="true" aria-label="Sound">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path class="spk" d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/>
-        <path class="waves" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>
-        <path class="mute" d="M16 9.5l5 5M21 9.5l-5 5"/>
-      </svg>
-    </button>
-  </header>
-
-  <main class="stage" id="stage">
-    <div class="stage-head">
-      <div class="now">
-        <p class="eyebrow" id="lessonName">Lesson 1 · Pointer fingers</p>
-        <span class="song">Twinkle, Twinkle, Little Star</span>
-        <span class="count" id="noteCount">0 of 48 notes</span>
-      </div>
-      <div class="flow">
-        <div class="flow-top"><span class="eyebrow">Flow</span><span id="flowWord">Warming up</span></div>
-        <div class="meter"><div class="fill" id="flowFill"></div><i class="notch" style="left:50%"></i><i class="notch" style="left:75%"></i></div>
-        <div class="flow-legend"><span id="legendBass" style="left:50%">+ bass</span><span id="legendSparkle" style="left:75%">+ sparkles</span></div>
-      </div>
     </div>
-    <div class="sky-wrap">
-      <canvas id="sky" aria-label="Each note you type becomes a star. Steady typing makes evenly spaced stars."></canvas>
-      <div class="sky-hint" id="skyHint" hidden></div>
-    </div>
-    <div class="text" id="text" aria-label="Letters to type"></div>
+    <p class="progress-line" id="progressLine"></p>
+    <nav id="lessonNav"></nav>
+  </aside>
 
-    <div class="overlay" id="intro">
-      <div class="card">
-        <p class="eyebrow" id="introLesson">Lesson 1 · Pointer fingers</p>
-        <h2>Every key plays the next note</h2>
-        <p id="introTip">Rest your pointer fingers on F and J.</p>
-        <ul class="howto">
-          <li><strong>Keep a steady beat</strong>, like footsteps. Step, step, step.</li>
-          <li>The faint star shows when the next note is due. Press the key as it reaches the glowing line.</li>
-          <li>Steady keys make big, bright stars. Pressed a wrong key? Keep going.</li>
-        </ul>
-        <div class="btn-row">
-          <button type="button" class="btn" id="startBtn">Start the song</button>
-          <span class="muted">or press <span class="kbd">Space</span></span>
+  <div class="main">
+    <header class="toolbar">
+      <div class="brand mobile-only">
+        <svg viewBox="0 0 22 22" aria-hidden="true"><rect x="1" y="9" width="3.2" height="10" rx="1.6"/><rect x="6.6" y="4" width="3.2" height="15" rx="1.6"/><rect x="12.2" y="7" width="3.2" height="12" rx="1.6"/><rect x="17.8" y="2" width="3.2" height="17" rx="1.6"/></svg>
+        Type a Tune
+      </div>
+      <div class="title-block">
+        <p class="label" id="lessonEyebrow">Lesson 1 · Home row</p>
+        <h1 id="lessonTitle">Index fingers</h1>
+      </div>
+      <div class="controls">
+        <label class="field mobile-only"><span class="label">Lesson</span><select id="lessonSelect"></select></label>
+        <label class="field"><span class="label">Song</span><select id="songSelect"></select></label>
+        <button type="button" class="icon-btn" id="soundBtn" aria-pressed="true" aria-label="Sound">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path class="spk" d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/>
+            <path class="waves" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>
+            <path class="mute" d="M16 9.5l5 5M21 9.5l-5 5"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <section class="exercise panel" id="stage" aria-label="Exercise">
+      <div class="metrics">
+        <div class="metric metric-flow">
+          <span class="label">Flow</span>
+          <div class="flow-row">
+            <span class="metric-value"><span id="flowValue">–</span><small id="flowWord">Warming up</small></span>
+            <div class="meter" aria-hidden="true"><div class="fill" id="flowFill"></div><i class="notch" style="left:50%"></i><i class="notch" style="left:75%"></i></div>
+          </div>
+          <span class="flow-note">Bass joins at <b id="legendBass">50%</b>, octave at <b id="legendOctave">75%</b></span>
+        </div>
+        <div class="metric"><span class="label">Accuracy</span><span class="metric-value" id="accValue">–</span></div>
+        <div class="metric"><span class="label">Speed</span><span class="metric-value"><span id="wpmValue">–</span><small>wpm</small></span></div>
+        <div class="metric"><span class="label">Notes</span><span class="metric-value" id="progValue">0/32</span></div>
+      </div>
+
+      <div class="rhythm">
+        <div class="rhythm-head">
+          <span class="label">Timing, against your own beat</span>
+          <div class="legend" aria-hidden="true">
+            <span><i class="sw on"></i>On beat</span>
+            <span><i class="sw early"></i>Early</span>
+            <span><i class="sw late"></i>Late</span>
+            <span><i class="sw miss"></i>Missed</span>
+            <span><i class="sw next"></i>Next note</span>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="rhythm" role="img" aria-label="Timing chart. Each keystroke is a bar placed by time and pitch. Evenly spaced bars mean an even pace."></canvas>
+          <div class="chart-hint" id="chartHint" hidden></div>
         </div>
       </div>
-    </div>
-    <div class="overlay" id="results" hidden></div>
-  </main>
 
-  <section class="kb-area" aria-label="Keyboard guide">
-    <p class="next" id="nextLabel" aria-live="polite"></p>
-    <div class="keyboard" id="keyboard" aria-hidden="true"></div>
-    <div class="hands" id="hands" aria-hidden="true">
-      <div class="hand left">
-        <div class="fingers"><i class="fg f-lp" data-f="lp"></i><i class="fg f-lr" data-f="lr"></i><i class="fg f-lm" data-f="lm"></i><i class="fg f-li" data-f="li"></i></div>
-        <div class="palm"></div>
-        <i class="fg thumb f-th" data-f="th"></i>
-      </div>
-      <div class="hand right">
-        <div class="fingers"><i class="fg f-ri" data-f="ri"></i><i class="fg f-rm" data-f="rm"></i><i class="fg f-rr" data-f="rr"></i><i class="fg f-rp" data-f="rp"></i></div>
-        <div class="palm"></div>
-        <i class="fg thumb f-th" data-f="th"></i>
-      </div>
-    </div>
-  </section>
+      <div class="text" id="text" aria-label="Text to type"></div>
 
-  <p class="foot">Made a mistake? Keep going. Press <span class="kbd">Esc</span> to start the song over.</p>
+      <div class="overlay" id="intro">
+        <div class="card" role="dialog" aria-labelledby="introTitle">
+          <p class="label" id="introLesson">Lesson 1 · Home row</p>
+          <h2 id="introTitle">Index fingers</h2>
+          <p id="introTip"></p>
+          <ul class="steps" id="howto">
+            <li><strong>Keep an even pace</strong>, like a ticking clock. Speed is not scored, evenness is.</li>
+            <li>Each correct key plays the next note. The dashed marker shows when the next key is due.</li>
+            <li>Mistakes are marked and the song keeps going. Retype a missed letter right away to fix it.</li>
+          </ul>
+          <div class="custom" id="customBox" hidden>
+            <label class="label" for="customWords">Your words</label>
+            <textarea id="customWords" rows="3" spellcheck="false" autocomplete="off" placeholder="friend, happy, little, garden, because"></textarea>
+            <p class="muted small" id="customInfo"></p>
+          </div>
+          <div class="btn-row">
+            <button type="button" class="btn" id="startBtn">Start</button>
+            <span class="muted small" id="startHint">or press <span class="kbd">Space</span></span>
+          </div>
+        </div>
+      </div>
+      <div class="overlay" id="results" hidden></div>
+    </section>
+
+    <section class="kb-panel panel" aria-label="Keyboard guide">
+      <div class="kb-wrap">
+        <p class="next" id="nextLabel" aria-live="polite"></p>
+        <div class="keyboard" id="keyboard" aria-hidden="true"></div>
+        <div class="fingermap" id="fingerMap" aria-hidden="true">
+          <span class="fm f-lp" data-f="lp"><b>Left</b>Pinky</span>
+          <span class="fm f-lr" data-f="lr"><b>Left</b>Ring</span>
+          <span class="fm f-lm" data-f="lm"><b>Left</b>Middle</span>
+          <span class="fm f-li" data-f="li"><b>Left</b>Index</span>
+          <span class="fm f-th" data-f="th"><b>Both</b>Thumb</span>
+          <span class="fm f-ri" data-f="ri"><b>Right</b>Index</span>
+          <span class="fm f-rm" data-f="rm"><b>Right</b>Middle</span>
+          <span class="fm f-rr" data-f="rr"><b>Right</b>Ring</span>
+          <span class="fm f-rp" data-f="rp"><b>Right</b>Pinky</span>
+        </div>
+      </div>
+    </section>
+
+    <p class="foot">Esc restarts the lesson. Progress is saved in this browser only.</p>
+  </div>
 </div>
 
 <script>
 (() => {
   'use strict';
 
-  // ---------- Song: "Twinkle, Twinkle, Little Star" (traditional, public domain) ----------
-  // Long notes are struck twice so every beat is one key: 48 notes, 48 keys per lesson.
-  const MELODY = 'C C G G A A G G F F E E D D C C G G F F E E D D G G F F E E D D C C G G A A G G F F E E D D C C'.split(' ');
-  const CHORDS = 'C C F C F C G C C F C G C F C G C C F C F C G C'.split(' '); // one chord per two notes
-  const MEL_HZ = { C: 523.25, D: 587.33, E: 659.25, F: 698.46, G: 783.99, A: 880.0 };
-  const BASS_HZ = { C: [130.81, 196.0], F: [174.61, 261.63], G: [196.0, 293.66] };
-  const ROW_OF = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5 };
-  const LEN = MELODY.length;
+  // ---------- Songs (all public domain) ----------
+  // Every key plays one beat. Long notes are struck again on each beat they last.
+  // A song's length sets the lesson's length. Chords are one per two notes ("-" = none).
+  const SONGS = [
+    { id: 'ode', title: 'Ode to Joy', by: 'Beethoven', end: 'C',
+      notes: 'E5 E5 F5 G5 G5 F5 E5 D5 C5 C5 D5 E5 E5 E5 D5 D5 E5 E5 F5 G5 G5 F5 E5 D5 C5 C5 D5 E5 D5 D5 C5 C5',
+      chords: 'C C G G C C C G C C G G C C G C' },
+    { id: 'elise', title: 'Für Elise', by: 'Beethoven', end: 'Am',
+      notes: 'E5 D#5 E5 D#5 E5 B4 D5 C5 A4 C4 E4 A4 B4 E4 G#4 B4 C5 E4 E5 D#5 E5 D#5 E5 B4 D5 C5 A4 C4 E4 A4 B4 E4 C5 B4 A4',
+      chords: '- - - - Am Am E E Am - - - - Am Am E E Am' },
+    { id: 'mountain', title: 'In the Hall of the Mountain King', by: 'Grieg', end: 'Am',
+      notes: 'A4 B4 C5 D5 E5 C5 E5 E5 D#5 B4 D#5 D#5 D5 A#4 D5 D5 A4 B4 C5 D5 E5 C5 E5 A5 G5 E5 C5 E5 G5 G5',
+      chords: 'Am Am Am Am Am Am Am Am Am Am Am Am Am Am Am' },
+    { id: 'twinkle', title: 'Twinkle, Twinkle, Little Star', by: 'Traditional', end: 'C',
+      notes: 'C5 C5 G5 G5 A5 A5 G5 G5 F5 F5 E5 E5 D5 D5 C5 C5 G5 G5 F5 F5 E5 E5 D5 D5 G5 G5 F5 F5 E5 E5 D5 D5 C5 C5 G5 G5 A5 A5 G5 G5 F5 F5 E5 E5 D5 D5 C5 C5',
+      chords: 'C C F C F C G C C F C G C F C G C C F C F C G C' },
+  ].map((s) => {
+    const notes = s.notes.split(' ');
+    const midis = [...new Set(notes.map(midiOf))].sort((a, b) => a - b);
+    return { ...s, notes, chords: s.chords.split(' '), rows: midis, rowOf: Object.fromEntries(midis.map((m, i) => [m, i])) };
+  });
+  function midiOf(name) {
+    const m = /^([A-G])(#?)(\d)$/.exec(name);
+    return { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] ? 1 : 0) + (Number(m[3]) + 1) * 12;
+  }
+  const hzOf = (midi) => 440 * Math.pow(2, (midi - 69) / 12);
+  const NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const nameOf = (midi) => NAMES[midi % 12] + (Math.floor(midi / 12) - 1);
+  const BASS_HZ = { C: [130.81, 196.0], F: [174.61, 261.63], G: [196.0, 293.66], Am: [110.0, 220.0], E: [82.41, 164.81] };
+  const FINALE = { C: [523.25, 659.25, 783.99, 1046.5], Am: [440.0, 523.25, 659.25, 880.0] };
 
   // ---------- Flow scoring ----------
   // Steadiness of one keystroke = how close its gap is to the typist's own recent beat.
   // exp(-K * |ln(gap / beat)|): on the beat = 1, 50% late = 0.57, twice as long = 0.38.
+  // Within 15% of the beat counts as "on beat" in the timing chart.
   const K = 1.4;
-  const BASS_AT = 0.5;      // flow needed before the bass joins in
-  const SPARKLE_AT = 0.75;  // flow needed for sparkles
-  const STARS2 = { flow: 0.6, acc: 0.85 };
-  const STARS3 = { flow: 0.75, acc: 0.93 };
+  const ON_BEAT = 0.15;
+  const BASS_AT = 0.5;
+  const OCTAVE_AT = 0.75;
+  const LEVELS = ['Not started', 'Completed', 'Steady', 'Mastered'];
+  const LEVEL2 = { flow: 0.6, acc: 0.85 };
+  const LEVEL3 = { flow: 0.75, acc: 0.93 };
 
-  // ---------- Fingers, keys, lessons ----------
+  // ---------- Fingers and keys ----------
   const FINGERS = {
-    lp: 'left pinky', lr: 'left ring finger', lm: 'left middle finger', li: 'left pointer finger',
-    ri: 'right pointer finger', rm: 'right middle finger', rr: 'right ring finger', rp: 'right pinky', th: 'either thumb',
+    lp: 'left pinky', lr: 'left ring finger', lm: 'left middle finger', li: 'left index finger',
+    ri: 'right index finger', rm: 'right middle finger', rr: 'right ring finger', rp: 'right pinky', th: 'either thumb',
   };
   const FINGER_KEYS = { lp: 'qaz', lr: 'wsx', lm: 'edc', li: 'rtfgvb', ri: 'yuhjnm', rm: 'ik,', rr: 'ol.', rp: "p;/[]'", th: ' ' };
+  const HOME_OF = { lp: 'a', lr: 's', lm: 'd', li: 'f', ri: 'j', rm: 'k', rr: 'l', rp: ';' };
   const FINGER_OF = {};
   for (const [f, ks] of Object.entries(FINGER_KEYS)) for (const k of ks) FINGER_OF[k] = f;
   const ROWS = [
@@ -507,28 +617,130 @@ button { font: inherit; color: inherit; }
     { off: 0.75, keys: [..."asdfghjkl;'"] },
     { off: 1.25, keys: [...'zxcvbnm,./'] },
   ];
-  const WORDS = ('a as ad ah ha add all ask dad sad lad had has gas ash fad lag fall hall glad flag dash half ' +
-    'alas lads dads asks gala sash hash salad flask glass shall flash flags falls halls salsa slash salads flasks').split(' ');
-  const LESSONS = [
-    { id: 'fj', label: 'F J', title: 'Pointer fingers', keys: 'fj', fresh: 'fj',
-      tip: 'Rest your pointer fingers on F and J. Feel the little bumps? They help you find home without looking.' },
-    { id: 'dk', label: 'D K', title: 'Middle fingers', keys: 'fjdk', fresh: 'dk',
-      tip: 'Your middle fingers rest on D and K, right next to your pointer fingers.' },
-    { id: 'sl', label: 'S L', title: 'Ring fingers', keys: 'fjdksl', fresh: 'sl',
-      tip: 'Your ring fingers rest on S and L.' },
-    { id: 'ap', label: 'A ;', title: 'Pinkies', keys: 'fjdksla;', fresh: 'a;',
-      tip: 'Your pinkies rest on A and the ; key. They are small, but they can keep the beat too.' },
-    { id: 'gh', label: 'G H', title: 'Reach in', keys: 'fjdksla;gh', fresh: 'gh',
-      tip: 'G and H are a short reach in for your pointer fingers. Reach, press, and slide back home.' },
-    { id: 'words', label: 'Words', title: 'Home row words', keys: 'asdfghjkl', words: WORDS,
-      tip: 'Real words now. Keep the same steady beat, and tap the space bar with your thumb.' },
-  ];
+  const ROW_OF_KEY = {};
+  ROWS.forEach((r, i) => r.keys.forEach((k) => { ROW_OF_KEY[k] = i; }));
 
-  // ---------- Text generation (always exactly LEN characters) ----------
+  function reachHint(k) {
+    if (k === ' ' || ROW_OF_KEY[k] == null) return '';
+    const row = ROW_OF_KEY[k], inward = 'tgbyhn'.includes(k);
+    const dir = row === 0 ? 'up' : row === 2 ? 'down' : '';
+    if (dir && inward) return `reach ${dir} and in`;
+    if (dir) return `reach ${dir}`;
+    if (inward) return 'reach in';
+    if (k === "'") return 'reach out';
+    return '';
+  }
+
+  // ---------- Words ----------
+  // Each lesson uses only the words it can spell with the keys learned so far.
+  const WORD_BANK = [...new Set((
+    'a as ad ah ha add all ask dad sad lad had has gas ash fad lag fall hall glad flag dash half alas lads dads asks gala sash hash ' +
+    'salad flask glass shall flash flags falls halls salsa slash salads flasks ' +
+    'aid side hide slide glide kid kids lid did dig fig dish fish is if his hike like lake sale safe said sea see seed she shed sled ' +
+    'desk deal feel feed fed led leg egg eggs else idea ideas life file fake flake lead leaf heal held field fields shield aside skid ' +
+    'ski skis age ages ledge hedge glee heel fade jade kale hail sail fail slid disk silk giggle giggles jiggle ladle shake fiddle ' +
+    'aisle high sigh eagle gale heads seal ' +
+    'rug hug jug dug sure use us fur far jar rag are ear dear hear fear rush sugar huge glue laugh red ride read rule rise dress fresh ' +
+    'drag grade grass share rake dark lark shark sharks ruler surf fudge judge rare guide guard real radar huddle eraser garage shred rider ' +
+    'tea yes yet say day stay tray they try tree treat sit hat that the take tall yard yell tired tiger turtle sky shy fly dry hurt art ' +
+    'eat ate great light right sight kitty early ready study sturdy first sister after at it its eight street teddy tasty gift fruit ' +
+    'shirt thirsty duty jelly silly fussy tidy kite kites lady salty dusty hairy fairy hurry fast last salt test rest dirt jet jets flat ' +
+    'taste turkey trees yeti guitar ' +
+    'low slow show how owl owls two word world work wolf would water yellow follow flower tower wish wash wise story door floor food good ' +
+    'look hook foot too oak road goat go so to do of or out our who why what was were with will we row sweet swirl ghost house horse ' +
+    'hero radio rose jokes doll dog dogs frog frogs goldfish hold gold fork otter towel wood woods toad tooth shadow rodeo royal goose ' +
+    'geese today throw arrow sorry jolly forest lots sofa kiwi kayak whale hello daisy sweater shower ' +
+    'pie pig play park paper purple happy apple puppy quiet quick quilt quest quite quote squid square equal pool pop pot help keep ' +
+    'sleep ship shop stop top trip up put pet page people pepper pirate pillow puddle pupil sport spot step stripes soup super hippo ' +
+    'sheep jeep parrot peas pearl pass path paws pilot plate please pretty proud quack quirky squirrel squeak quail tulip grape grapes ' +
+    'potato tadpole teapot piglet puppet wrap speed sprout loop hoop hope rope spider spray ' +
+    'me my mom map milk mouse more most move love live have give five over river very visit vote wave gave save drive dive glove gloves ' +
+    'movie mud mug mist mask math may meal meat melt mile mirror mild mop moss motor mule jam ham him farm warm worm swim slime time home ' +
+    'game same smile stem storm steam dream team vase vet view violet valley every lava oval dove stove wavy heavy ivy solve maple mayor ' +
+    'meow messy mighty moose mouth mermaid museum summer hammer tummy yummy puma lemur llama emu ' +
+    'bag ball bat bear bee best big bike bird blue boat book brave bread brown bus but by an and in on no not now new night nine name ' +
+    'nest net snow sun run fun funny bunny bubble banana button basket bath bean bed bell belt berry blanket bone bones boots bottle bow ' +
+    'bowl brain bridge bright brother bug bugs bump burger butter banjo bend garden green grin hand happen honey horn ink iron jungle kind ' +
+    'king kitten land lemon lion many money monkey moon morning mountain nap neat needle nose note nothing nut nuts one open orange oven ' +
+    'paint panda pen penguin pine planet pond pony queen rabbit rain rainbow ribbon ring robin robot round sand seven sing snail snake ' +
+    'spin spoon spring stand stone sunny swing ten tent thank thin think tiny train turn van wind window wing winter yawn brownie ' +
+    'blueberry bumblebee ' +
+    'cat cake call car care city clap class clock cloud color come cook cool cup cute dance face ice juice nice once place race rice ' +
+    'space catch chicken picnic cookie cocoa crab crayon cricket crown cub cupcake curly cactus camel camp candle candy canoe cap card ' +
+    'carrot castle cave cereal chair chalk cheese cherry chess chin chip circle circus clay climb coat coin comb comet corn couch cow ' +
+    'crumb cuddle music magic ocean pencil picture pocket scarf school science scooter secret second snack soccer sock socks sauce peach ' +
+    'beach lunch bench branch much such teach which each back black duck kick luck neck pick rock stick truck track crack ' +
+    'box fox six mix fix next taxi extra wax relax explore axle exit expert oxen sixty sixteen toolbox mailbox lunchbox boxes foxes ' +
+    'mixer excited explain example express flex index pixel tuxedo xylophone boxer ' +
+    'zoo zip zero zebra lazy fuzzy pizza puzzle size prize freeze breeze dozen buzz fizz jazz quiz zigzag zipper zone zoom cozy dizzy ' +
+    'frozen gaze glaze haze lizard maze sneeze wizard blizzard bronze amaze blaze graze sizzle snooze squeeze zucchini ' +
+    'from going just know again could about better bring carry clean done draw drink full got grow hot long only own small start ' +
+    'together walk when then there here where some this can make see little jump down find three white pink'
+  ).split(' '))];
+  const SLASH_PAIRS = 'yes/no on/off in/out up/down and/or day/night hot/cold left/right top/bottom stop/go fast/slow big/small'.split(' ');
+
+  // ---------- Lessons ----------
+  const HOME = 'asdfghjkl;';
+  const TOP = HOME + 'eirutywoqp';
+  const ALL = TOP + 'vmbnc,x.z/';
+  const GROUPS = [
+    { id: 'home', label: 'Home row' },
+    { id: 'top', label: 'Top row' },
+    { id: 'bottom', label: 'Bottom row' },
+    { id: 'mine', label: 'Custom' },
+  ];
+  const LESSONS = [
+    { id: 'fj', group: 'home', label: 'F J', title: 'Index fingers', kind: 'drill', keys: 'fj', fresh: 'fj',
+      tip: 'Rest your index fingers on F and J. The small bumps on those keys let you find home without looking.' },
+    { id: 'dk', group: 'home', label: 'D K', title: 'Middle fingers', kind: 'drill', keys: 'fjdk', fresh: 'dk',
+      tip: 'Your middle fingers rest on D and K, next to your index fingers.' },
+    { id: 'sl', group: 'home', label: 'S L', title: 'Ring fingers', kind: 'drill', keys: 'fjdksl', fresh: 'sl',
+      tip: 'Your ring fingers rest on S and L.' },
+    { id: 'ap', group: 'home', label: 'A ;', title: 'Pinkies', kind: 'drill', keys: 'fjdksla;', fresh: 'a;',
+      tip: 'Your pinkies rest on A and the semicolon key. All eight fingers are now on the home row.' },
+    { id: 'gh', group: 'home', label: 'G H', title: 'Reach in', kind: 'drill', keys: HOME, fresh: 'gh',
+      tip: 'G and H are a short reach in for your index fingers. Reach, press, and return home.' },
+    { id: 'home-words', group: 'home', label: 'Words', title: 'Home row words', kind: 'words', keys: HOME,
+      tip: 'Real words with the home row. Keep the same even pace on letters and spaces, and use your thumb for the space bar.' },
+
+    { id: 'ei', group: 'top', label: 'E I', title: 'Middle fingers reach up', kind: 'reach', keys: HOME + 'ei', fresh: 'ei',
+      tip: 'Reach up from D to E, and from K to I, then return home.' },
+    { id: 'ru', group: 'top', label: 'R U', title: 'Index fingers reach up', kind: 'reach', keys: HOME + 'eiru', fresh: 'ru',
+      tip: 'Your index fingers reach up from F to R and from J to U.' },
+    { id: 'ty', group: 'top', label: 'T Y', title: 'Reach up and in', kind: 'reach', keys: HOME + 'eiruty', fresh: 'ty',
+      tip: 'T and Y are a longer reach, up and in for your index fingers. Slow the pace a little if you need to.' },
+    { id: 'wo', group: 'top', label: 'W O', title: 'Ring fingers reach up', kind: 'reach', keys: HOME + 'eirutywo', fresh: 'wo',
+      tip: 'Your ring fingers reach up from S to W and from L to O.' },
+    { id: 'qp', group: 'top', label: 'Q P', title: 'Pinkies reach up', kind: 'reach', keys: TOP, fresh: 'qp',
+      tip: 'Your pinkies reach up from A to Q and from the semicolon to P. Keep the other fingers resting on the home row.' },
+    { id: 'top-words', group: 'top', label: 'Words', title: 'Top row words', kind: 'words', keys: TOP,
+      tip: 'Words with the home and top rows. Keep your eyes on the screen.' },
+
+    { id: 'vm', group: 'bottom', label: 'V M', title: 'Index fingers reach down', kind: 'reach', keys: TOP + 'vm', fresh: 'vm',
+      tip: 'Your index fingers reach down from F to V and from J to M.' },
+    { id: 'bn', group: 'bottom', label: 'B N', title: 'Reach down and in', kind: 'reach', keys: TOP + 'vmbn', fresh: 'bn',
+      tip: 'B and N are a reach down and in for your index fingers.' },
+    { id: 'cc', group: 'bottom', label: 'C ,', title: 'Middle fingers reach down', kind: 'reach', keys: TOP + 'vmbnc,', fresh: 'c,',
+      tip: 'Your middle fingers reach down from D to C and from K to the comma.' },
+    { id: 'xp', group: 'bottom', label: 'X .', title: 'Ring fingers reach down', kind: 'reach', keys: TOP + 'vmbnc,x.', fresh: 'x.',
+      tip: 'Your ring fingers reach down from S to X and from L to the period.' },
+    { id: 'zs', group: 'bottom', label: 'Z /', title: 'Pinkies reach down', kind: 'reach', keys: ALL, fresh: 'z/',
+      tip: 'Your pinkies reach down from A to Z and from the semicolon to the slash.' },
+    { id: 'all-words', group: 'bottom', label: 'Words', title: 'All letters', kind: 'words', keys: ALL,
+      tip: 'Every letter on the keyboard. Keep the pace even and let the words flow.' },
+
+    { id: 'mine', group: 'mine', label: 'Abc', title: 'My words', kind: 'custom', keys: '',
+      tip: 'Type or paste a spelling list or any words. They become the text for the song.' },
+  ];
+  const CUSTOM_INDEX = LESSONS.findIndex((L) => L.kind === 'custom');
+  const TRACKED = LESSONS.filter((L) => L.kind !== 'custom');
+
+  // ---------- Text generation ----------
   const BLOCK = /kkk|fag|ass|shag|hag/;
   const rnd = (n) => Math.floor(Math.random() * n);
   const pick = (a) => a[rnd(a.length)];
 
+  // Letter groups for the first home-row lessons, where there are almost no real words yet.
   function drillChunk(L) {
     const fresh = [...L.fresh], all = [...L.keys];
     const r = Math.random();
@@ -546,11 +758,11 @@ button { font: inherit; color: inherit; }
     return BLOCK.test(s) ? drillChunk(L) : s;
   }
 
-  function makeDrill(L) {
+  function makeDrill(L, len) {
     const out = [];
     let used = 0;
     for (let guard = 0; guard < 500; guard++) {
-      const rem = LEN - used - (out.length ? 1 : 0);
+      const rem = len - used - (out.length ? 1 : 0);
       let c = drillChunk(L);
       if (c.length >= rem - 1) {                // last group: fill exactly what is left
         while (c.length < rem) c += drillChunk(L);
@@ -565,27 +777,94 @@ button { font: inherit; color: inherit; }
     return out.join(' ');
   }
 
-  function makeWords(words) {
+  // "Reach and return" groups: home key, new key, home key. "ded", "kik", "frf".
+  function reachDrill(L) {
+    const k = pick([...L.fresh]), h = HOME_OF[FINGER_OF[k]] || k;
+    return pick([h + k + h, k + k, h + k, k + h + k, h + k + h + k]);
+  }
+
+  function decorate(w, L) {
+    const fresh = L.fresh || '', keys = L.keys;
+    if (fresh.includes('/') && Math.random() < 0.3) {
+      const pairs = SLASH_PAIRS.filter((p) => [...p].every((c) => keys.includes(c)));
+      if (pairs.length) return pick(pairs);
+    }
+    if (keys.includes(',') && Math.random() < (fresh.includes(',') ? 0.35 : 0.07)) return w + ',';
+    if (keys.includes('.') && Math.random() < (fresh.includes('.') ? 0.35 : 0.07)) return w + '.';
+    return w;
+  }
+
+  const poolCache = {};
+  function poolsFor(L) {
+    const key = L.id + '|' + L.keys + '|' + (L.fresh || '');
+    if (L.kind !== 'custom' && poolCache[key]) return poolCache[key];
+    const allowed = new Set(L.keys);
+    const all = L.kind === 'custom' ? customWords() : WORD_BANK.filter((w) => [...w].every((c) => allowed.has(c)));
+    const fresh = L.fresh ? all.filter((w) => [...L.fresh].some((c) => w.includes(c))) : [];
     const byLen = {};
-    for (const w of words) (byLen[w.length] = byLen[w.length] || []).push(w);
+    for (const w of all) (byLen[w.length] = byLen[w.length] || []).push(w);
+    const pools = { all, fresh, byLen };
+    if (L.kind !== 'custom') poolCache[key] = pools;
+    return pools;
+  }
+
+  function makeText(L, len) {
+    if (L.kind === 'drill') return makeDrill(L, len);
+    const pools = poolsFor(L);
+    const canReach = L.kind === 'reach' && L.fresh;
+    if (!pools.all.length && !canReach) return '';
+    const chunk = () => {
+      if (canReach && (!pools.all.length || Math.random() < 0.35)) return reachDrill(L);
+      const src = pools.fresh.length && Math.random() < 0.7 ? pools.fresh : pools.all;
+      return decorate(pick(src), L);
+    };
+    const exact = (rem) => {
+      for (let i = 0; i < 80; i++) { const c = chunk(); if (c.length === rem) return c; }
+      if (pools.byLen[rem]) return pick(pools.byLen[rem]);
+      if (canReach) { let d = ''; while (d.length < rem) d += reachDrill(L); return d.slice(0, rem); }
+      return null;
+    };
     const out = [];
     let used = 0;
-    for (let guard = 0; guard < 500; guard++) {
-      const rem = LEN - used - (out.length ? 1 : 0);
-      if (rem <= 6 && byLen[rem]) { out.push(pick(byLen[rem])); break; }
-      const options = words.filter((w) => w.length <= rem - 2 && w !== out[out.length - 1]);
-      const w = pick(options);
-      out.push(w);
-      used += w.length + (out.length > 1 ? 1 : 0);
+    for (let guard = 0; guard < 400; guard++) {
+      const rem = len - used - (out.length ? 1 : 0);
+      if (rem <= 0) break;
+      if (rem <= 9) {
+        const e = exact(rem);
+        if (e) { out.push(e); break; }
+      }
+      let c = null;
+      for (let tries = 0; tries < 60 && !c; tries++) {
+        const x = chunk();
+        if (x.length <= rem - 2 && x !== out[out.length - 1]) c = x;
+      }
+      if (!c) c = pools.all.filter((w) => w.length <= rem - 2).sort((a, b) => a.length - b.length)[0];
+      if (!c) break; // nothing fits: the text ends a little early and the song stops there
+      out.push(c);
+      used += c.length + (out.length > 1 ? 1 : 0);
     }
     return out.join(' ');
   }
 
   // ---------- Saved progress (this browser only) ----------
   const STORE = 'type-a-tune:v1';
-  const saved = { best: {}, sound: true };
+  const saved = { best: {}, sound: true, song: 'ode', custom: '' };
   try { Object.assign(saved, JSON.parse(localStorage.getItem(STORE)) || {}); } catch (e) { /* storage unavailable */ }
   function persist() { try { localStorage.setItem(STORE, JSON.stringify(saved)); } catch (e) { /* ignore */ } }
+
+  function parseWords(raw) {
+    const words = String(raw || '').toLowerCase()
+      .replace(/[^a-z',.;/\s]/g, ' ')
+      .split(/[\s,]+/)
+      .map((w) => w.replace(/^[^a-z]+|[^a-z]+$/g, ''))
+      .filter((w) => w && w.length <= 20);
+    return [...new Set(words)].slice(0, 200);
+  }
+  let customCache = { raw: null, words: [] };
+  function customWords() {
+    if (customCache.raw !== saved.custom) customCache = { raw: saved.custom, words: parseWords(saved.custom) };
+    return customCache.words;
+  }
 
   // ---------- Sound: a small music box ----------
   const Sound = {
@@ -596,6 +875,7 @@ button { font: inherit; color: inherit; }
       if (!AC) return;
       try {
         const ctx = new AC();
+        this.ctx = ctx;
         const out = ctx.createGain();
         out.gain.value = this.on ? 0.8 : 0;
         const comp = ctx.createDynamicsCompressor();
@@ -603,10 +883,9 @@ button { font: inherit; color: inherit; }
         const bus = ctx.createGain();
         bus.connect(out);
         const verb = ctx.createConvolver();
-        this.ctx = ctx;
-        verb.buffer = this.impulse(2.4, 3.2);
+        verb.buffer = this.impulse(2.2, 3.4);
         const wet = ctx.createGain();
-        wet.gain.value = 0.3;
+        wet.gain.value = 0.22;
         bus.connect(verb); verb.connect(wet); wet.connect(out);
         this.out = out; this.bus = bus;
       } catch (e) { this.ctx = null; }
@@ -625,7 +904,7 @@ button { font: inherit; color: inherit; }
     },
     tone(f, type, peak, decay, delay = 0, dest) {
       const ctx = this.ctx;
-      if (!ctx) return;
+      if (!ctx || !this.bus) return;
       const t = ctx.currentTime + delay, o = ctx.createOscillator(), g = ctx.createGain();
       o.type = type;
       o.frequency.setValueAtTime(f, t);
@@ -636,15 +915,15 @@ button { font: inherit; color: inherit; }
       o.start(t); o.stop(t + decay + 0.05);
     },
     note(f, v = 1) {
-      this.tone(f, 'sine', 0.26 * v, 1.5);
+      this.tone(f, 'sine', 0.26 * v, 1.4);
       this.tone(f * 2, 'sine', 0.06 * v, 0.5);
-      this.tone(f * 3, 'triangle', 0.025 * v, 0.12);
+      this.tone(f * 3, 'triangle', 0.022 * v, 0.12);
     },
-    bass(chord) { for (const f of BASS_HZ[chord]) this.tone(f, 'triangle', 0.11, 1.6); },
-    sparkle(f) { this.tone(f * 2, 'sine', 0.05, 0.6, 0.05); },
+    bass(chord) { for (const f of BASS_HZ[chord] || []) this.tone(f, 'triangle', 0.11, 1.5); },
+    octave(f) { this.tone(f * 2, 'sine', 0.05, 0.6, 0.04); },
     clunk() {
       const ctx = this.ctx;
-      if (!ctx) return;
+      if (!ctx || !this.out) return;
       const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
       o.type = 'sine';
       o.frequency.setValueAtTime(170, t);
@@ -655,34 +934,35 @@ button { font: inherit; color: inherit; }
       o.connect(g); g.connect(this.out);
       o.start(t); o.stop(t + 0.2);
     },
-    finale() {
-      [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => this.tone(f, 'sine', 0.2, 1.8, i * 0.09));
-      this.bass('C');
-      this.tone(2093, 'sine', 0.04, 1.2, 0.36);
+    finale(chord) {
+      (FINALE[chord] || FINALE.C).forEach((f, i) => this.tone(f, 'sine', 0.2, 1.8, i * 0.09));
+      this.bass(chord);
     },
   };
 
   // ---------- DOM ----------
   const $ = (id) => document.getElementById(id);
   const els = {
-    lessons: $('lessons'), sound: $('soundBtn'), stage: $('stage'), lessonName: $('lessonName'),
-    count: $('noteCount'), flowWord: $('flowWord'), flowFill: $('flowFill'),
-    legendBass: $('legendBass'), legendSparkle: $('legendSparkle'),
-    sky: $('sky'), hint: $('skyHint'), text: $('text'),
-    intro: $('intro'), introLesson: $('introLesson'), introTip: $('introTip'), startBtn: $('startBtn'),
-    results: $('results'), next: $('nextLabel'), kb: $('keyboard'), hands: $('hands'),
+    progressLine: $('progressLine'), nav: $('lessonNav'), lessonSelect: $('lessonSelect'), songSelect: $('songSelect'),
+    sound: $('soundBtn'), stage: $('stage'), eyebrow: $('lessonEyebrow'), title: $('lessonTitle'),
+    flowValue: $('flowValue'), flowWord: $('flowWord'), flowFill: $('flowFill'), legendBass: $('legendBass'), legendOctave: $('legendOctave'),
+    acc: $('accValue'), wpm: $('wpmValue'), prog: $('progValue'),
+    chart: $('rhythm'), hint: $('chartHint'), text: $('text'),
+    intro: $('intro'), introLesson: $('introLesson'), introTitle: $('introTitle'), introTip: $('introTip'), howto: $('howto'),
+    customBox: $('customBox'), customWords: $('customWords'), customInfo: $('customInfo'),
+    startBtn: $('startBtn'), startHint: $('startHint'),
+    results: $('results'), next: $('nextLabel'), kb: $('keyboard'), fingerMap: $('fingerMap'),
   };
-  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // ---------- Game state ----------
   const S = {
-    lesson: 0, phase: 'intro', round: 0,
-    text: '', pos: 0, status: [],          // status per letter: 0 waiting, 1 right, 2 wrong, 3 fixed
+    lesson: 0, practice: null, song: SONGS[0], phase: 'intro', round: 0,
+    text: '', len: 0, pos: 0, status: [],   // status per letter: 0 waiting, 1 right, 2 wrong, 3 fixed
     charEls: [], keyEls: {},
     lastKeyT: null, startT: null, endT: null,
     gaps: [], beat: 900, outRun: 0,         // recent gaps between keys and their median ("the beat")
-    flow: 0, scores: [], onBreak: false,
-    lastErr: -1, events: [], stats: {}, pxPerMs: 0.07, caps: false, blurred: false,
+    flow: 0, scores: [], timing: { early: 0, on: 0, late: 0 }, onBreak: false,
+    lastErr: -1, events: [], stats: {}, pxPerMs: 0.06, caps: false, blurred: false,
   };
 
   const median = (a) => { const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
@@ -690,6 +970,20 @@ button { font: inherit; color: inherit; }
   const pct = (x) => Math.round(x * 100) + '%';
   const breakMs = () => Math.max(5000, S.beat * 4);
   const keyName = (k) => (k === ' ' ? 'Space' : k.toUpperCase());
+  const noteAt = (i) => S.song.notes[i % S.song.notes.length];
+  const currentLesson = () => S.practice || LESSONS[S.lesson];
+  const groupLabel = (id) => (GROUPS.find((g) => g.id === id) || {}).label || '';
+  const levelOf = (L) => saved.best[L.id] || 0;
+
+  function eyebrowOf(L) {
+    if (L.id === 'practice') return `Practice · from lesson ${S.lesson + 1}`;
+    if (L.kind === 'custom') return 'Custom';
+    return `Lesson ${LESSONS.indexOf(L) + 1} · ${groupLabel(L.group)}`;
+  }
+  function lessonKeys(L) {
+    if (L.kind === 'custom') return [...new Set(customWords().join(''))].join('');
+    return L.keys;
+  }
 
   // ---------- Building the page ----------
   function buildKeyboard() {
@@ -716,26 +1010,67 @@ button { font: inherit; color: inherit; }
     return el;
   }
 
-  function renderLessons() {
-    els.lessons.textContent = '';
-    LESSONS.forEach((L, i) => {
-      const best = saved.best[L.id] || 0;
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'lesson' + (i === S.lesson ? ' on' : '');
-      b.setAttribute('aria-pressed', String(i === S.lesson));
-      b.setAttribute('aria-label', `Lesson ${i + 1}, ${L.title}. Best: ${best} of 3 stars.`);
-      b.innerHTML = `<span class="lesson-keys">${L.label}</span><span class="lesson-stars">${
-        [0, 1, 2].map((n) => `<i class="${n < best ? 'on' : ''}">★</i>`).join('')}</span>`;
-      b.addEventListener('click', () => { S.lesson = i; newRound(true, true); });
-      els.lessons.appendChild(b);
-    });
+  const levelBars = (n) => `<span class="level" aria-hidden="true">${[1, 2, 3].map((i) => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</span>`;
+
+  function renderNav() {
+    const mastered = TRACKED.filter((L) => levelOf(L) === 3).length;
+    const done = TRACKED.filter((L) => levelOf(L) > 0).length;
+    els.progressLine.innerHTML = `<b>${mastered}</b> of ${TRACKED.length} mastered · ${done} completed`;
+
+    els.nav.textContent = '';
+    for (const g of GROUPS) {
+      const box = document.createElement('div');
+      box.className = 'nav-group';
+      const items = LESSONS.map((L, i) => [L, i]).filter(([L]) => L.group === g.id);
+      const tracked = items.filter(([L]) => L.kind !== 'custom');
+      const m = tracked.filter(([L]) => levelOf(L) === 3).length;
+      box.innerHTML = `<div class="nav-head"><span class="label">${g.label}</span><span>${tracked.length ? `${m}/${tracked.length}` : ''}</span></div>`;
+      for (const [L, i] of items) {
+        const lv = levelOf(L);
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'nav-item' + (i === S.lesson ? ' on' : '');
+        if (i === S.lesson) b.setAttribute('aria-current', 'true');
+        b.setAttribute('aria-label', L.kind === 'custom' ? 'My words' : `Lesson ${i + 1}, ${L.title}. ${LEVELS[lv]}.`);
+        b.title = L.kind === 'custom' ? 'Practice your own word list' : LEVELS[lv];
+        b.innerHTML = `<span class="ni-keys">${L.label}</span><span class="ni-title">${L.title}</span>${L.kind === 'custom' ? '' : levelBars(lv)}`;
+        b.addEventListener('click', () => selectLesson(i));
+        box.appendChild(b);
+      }
+      els.nav.appendChild(box);
+    }
+
+    els.lessonSelect.textContent = '';
+    for (const g of GROUPS) {
+      const og = document.createElement('optgroup');
+      og.label = g.label;
+      LESSONS.forEach((L, i) => {
+        if (L.group !== g.id) return;
+        const o = document.createElement('option');
+        o.value = String(i);
+        o.textContent = L.kind === 'custom' ? 'My words' : `${i + 1}. ${L.label} · ${L.title}${levelOf(L) ? ` (${LEVELS[levelOf(L)]})` : ''}`;
+        og.appendChild(o);
+      });
+      els.lessonSelect.appendChild(og);
+    }
+    els.lessonSelect.value = String(S.lesson);
+  }
+
+  function renderSongSelect() {
+    els.songSelect.textContent = '';
+    for (const s of SONGS) {
+      const o = document.createElement('option');
+      o.value = s.id;
+      o.textContent = `${s.title} · ${s.by} · ${s.notes.length} notes`;
+      els.songSelect.appendChild(o);
+    }
+    els.songSelect.value = S.song.id;
   }
 
   function renderText() {
     els.text.textContent = '';
     S.charEls = [];
-    const words = S.text.split(' ');
+    const words = S.text ? S.text.split(' ') : [];
     words.forEach((w, wi) => {
       const g = document.createElement('span');
       g.className = 'word';
@@ -761,12 +1096,18 @@ button { font: inherit; color: inherit; }
   }
 
   function markLessonKeys() {
-    const live = new Set([...LESSONS[S.lesson].keys, ' ']);
-    for (const [k, el] of Object.entries(S.keyEls)) el.classList.toggle('live', live.has(k));
+    const L = currentLesson();
+    const keys = lessonKeys(L);
+    const live = new Set([...keys, ' ']);
+    const fresh = new Set(L.fresh && L.fresh.length < keys.length ? L.fresh : '');
+    for (const [k, el] of Object.entries(S.keyEls)) {
+      el.classList.toggle('live', live.has(k));
+      el.classList.toggle('fresh', fresh.has(k));
+    }
   }
 
   function setFingers(list) {
-    for (const el of els.hands.querySelectorAll('.fg')) el.classList.toggle('on', list.includes(el.dataset.f));
+    for (const el of els.fingerMap.querySelectorAll('.fm')) el.classList.toggle('on', list.includes(el.dataset.f));
   }
 
   function updateNext() {
@@ -776,32 +1117,59 @@ button { font: inherit; color: inherit; }
       S.keyEls.f.classList.add('next');
       S.keyEls.j.classList.add('next');
       fingers = ['li', 'ri'];
-      html = 'Fingers on the home row: <span class="keys"><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span><span class="kbd">F</span></span> and <span class="keys"><span class="kbd">J</span><span class="kbd">K</span><span class="kbd">L</span><span class="kbd">;</span></span>';
-    } else if (S.phase === 'play' && S.pos < LEN) {
-      const k = S.text[S.pos], f = FINGER_OF[k];
+      html = 'Home position: <span class="keys"><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span><span class="kbd">F</span></span> and <span class="keys"><span class="kbd">J</span><span class="kbd">K</span><span class="kbd">L</span><span class="kbd">;</span></span>';
+    } else if (S.phase === 'play' && S.pos < S.len) {
+      const k = S.text[S.pos], f = FINGER_OF[k], reach = reachHint(k);
       if (S.keyEls[k]) S.keyEls[k].classList.add('next');
       fingers = [f];
-      html = `Next <span class="kbd">${keyName(k)}</span><span class="dot f-${f}"></span><span class="who">${FINGERS[f]}</span>`;
+      html = `Next <span class="kbd">${keyName(k)}</span><span class="dot f-${f}"></span><span class="who">${FINGERS[f]}</span>` +
+        (reach ? `<span>· ${reach}</span>` : '');
       if (S.caps) html += '<span class="warn">Caps Lock is on</span>';
     } else {
-      html = 'Song finished!';
+      html = 'Lesson finished.';
     }
     els.next.innerHTML = html;
     setFingers(fingers);
   }
 
   function updateHud() {
-    const L = LESSONS[S.lesson];
-    els.lessonName.textContent = `Lesson ${S.lesson + 1} · ${L.title}`;
-    els.count.textContent = `${S.pos} of ${LEN} notes`;
+    const L = currentLesson();
+    els.eyebrow.textContent = eyebrowOf(L);
+    els.title.textContent = L.id === 'practice' ? `Practice: ${L.title}` : L.title;
+    els.prog.textContent = `${S.pos}/${S.len}`;
+    const typed = S.status.slice(0, S.pos);
+    els.acc.textContent = S.pos ? pct(typed.filter((v) => v === 1).length / S.pos) : '–';
+    const played = S.status.filter((v) => v === 1 || v === 3).length;
+    const mins = S.startT != null && S.lastKeyT > S.startT ? (S.lastKeyT - S.startT) / 60000 : 0;
+    els.wpm.textContent = played >= 5 && mins > 0 ? String(Math.round(played / 5 / mins)) : '–';
     els.flowFill.style.width = pct(S.flow);
+    els.flowValue.textContent = S.scores.length ? pct(S.flow) : '–';
     els.flowWord.textContent = !S.scores.length ? 'Warming up'
-      : S.flow < 0.35 ? 'Finding the beat'
-      : S.flow < BASS_AT ? 'Getting steady'
-      : S.flow < SPARKLE_AT ? 'Steady'
-      : 'In the flow!';
+      : S.flow < 0.35 ? 'Uneven'
+      : S.flow < BASS_AT ? 'Settling'
+      : S.flow < OCTAVE_AT ? 'Steady'
+      : 'In flow';
     els.legendBass.classList.toggle('lit', S.flow >= BASS_AT);
-    els.legendSparkle.classList.toggle('lit', S.flow >= SPARKLE_AT);
+    els.legendOctave.classList.toggle('lit', S.flow >= OCTAVE_AT);
+  }
+
+  function updateIntro() {
+    const L = currentLesson();
+    const custom = L.kind === 'custom';
+    els.introLesson.textContent = eyebrowOf(L);
+    els.introTitle.textContent = L.id === 'practice' ? `Practice: ${L.title}` : L.title;
+    els.introTip.textContent = L.tip;
+    els.howto.hidden = custom;
+    els.customBox.hidden = !custom;
+    if (custom) {
+      if (document.activeElement !== els.customWords) els.customWords.value = saved.custom || '';
+      const n = customWords().length;
+      els.customInfo.textContent = n
+        ? `${n} word${n === 1 ? '' : 's'} ready. Capital letters become lowercase. Numbers and other symbols are removed.`
+        : 'Add at least one word to start.';
+    }
+    els.startBtn.disabled = !S.len;
+    els.startHint.hidden = custom;
   }
 
   function showHint(msg) { els.hint.textContent = msg; els.hint.hidden = false; }
@@ -812,41 +1180,65 @@ button { font: inherit; color: inherit; }
   }
 
   // ---------- Rounds ----------
+  function selectLesson(i) {
+    S.lesson = i;
+    S.practice = null;
+    newRound(true, true);
+  }
+
+  function nextLessonIndex() {
+    const i = S.lesson + 1;
+    return i >= LESSONS.length || LESSONS[i].kind === 'custom' ? 0 : i;
+  }
+
   function newRound(withIntro, userAction) {
-    const L = LESSONS[S.lesson];
+    const L = currentLesson();
     S.round++;
-    S.text = L.words ? makeWords(L.words) : makeDrill(L);
+    S.text = makeText(L, S.song.notes.length);
+    S.len = S.text.length;
     S.pos = 0;
-    S.status = new Array(LEN).fill(0);
+    S.status = new Array(S.len).fill(0);
     S.lastKeyT = S.startT = S.endT = null;
     S.gaps = []; S.beat = 900; S.outRun = 0;
-    S.flow = 0; S.scores = []; S.onBreak = false;
+    S.flow = 0; S.scores = []; S.timing = { early: 0, on: 0, late: 0 }; S.onBreak = false;
     S.lastErr = -1; S.events = []; S.stats = {};
-    S.phase = withIntro ? 'intro' : 'play';
+    S.phase = withIntro || !S.len ? 'intro' : 'play';
     els.results.hidden = true;
     els.results.textContent = '';
-    els.intro.hidden = !withIntro;
+    els.intro.hidden = S.phase !== 'intro';
     hideHint();
-    if (withIntro) {
-      els.introLesson.textContent = `Lesson ${S.lesson + 1} · ${L.title}`;
-      els.introTip.textContent = L.tip;
-    }
-    renderLessons();
+    renderNav();
     renderText();
     markLessonKeys();
     updateHud();
     updateNext();
-    if (withIntro && userAction) els.startBtn.focus({ preventScroll: true });
-    else if (!withIntro) blurActive();
+    if (S.phase === 'intro') {
+      updateIntro();
+      if (userAction) (L.kind === 'custom' && !S.len ? els.customWords : els.startBtn).focus({ preventScroll: true });
+    } else {
+      blurActive();
+    }
   }
 
   function startPlay() {
+    if (!S.len) return;
     Sound.init();
     S.phase = 'play';
     els.intro.hidden = true;
     blurActive();
     paintChars();
     updateNext();
+  }
+
+  function startPractice(keys) {
+    const base = LESSONS[S.lesson];
+    const allowed = [...new Set(lessonKeys(base) + keys.join(''))].join('');
+    S.practice = {
+      id: 'practice', group: base.group, title: keys.map(keyName).join(' '),
+      kind: base.kind === 'drill' ? 'drill' : 'reach', keys: allowed, fresh: keys.join(''),
+      tip: 'A short round built from the keys that slowed you down or slipped. Keep the same even pace.',
+    };
+    newRound(true, true);
   }
 
   // ---------- Typing ----------
@@ -857,13 +1249,16 @@ button { font: inherit; color: inherit; }
     else if (S.lastErr >= 0 && k === S.text[S.lastErr]) kind = 'fix'; // retyping the letter just missed
 
     // Rhythm: compare this gap with the typist's own beat.
-    let s = null;
+    let s = null, cls = 'warm';
     if (S.lastKeyT != null) {
       const gap = t - S.lastKeyT;
       if (gap <= breakMs()) {
         const ratio = gap / S.beat;
         if (S.gaps.length >= 2) {
-          s = Math.exp(-K * Math.abs(Math.log(ratio)));
+          const lr = Math.log(ratio);
+          s = Math.exp(-K * Math.abs(lr));
+          cls = Math.abs(lr) <= ON_BEAT ? 'on' : lr < 0 ? 'early' : 'late';
+          S.timing[cls]++;
           S.scores.push(s);
           S.flow = S.scores.length === 1 ? 0.3 + 0.4 * s : S.flow + (s - S.flow) * 0.22;
         }
@@ -886,15 +1281,15 @@ button { font: inherit; color: inherit; }
 
     if (kind === 'ok') {
       S.status[S.pos] = 1;
-      hitNote(S.pos, t, s, false);
+      hitNote(S.pos, t, cls, false);
       S.pos++;
       S.lastErr = -1;
-      flashKey(k, 'press', 120);
+      flashKey(k, 'press', 110);
     } else if (kind === 'fix') {
       S.status[S.lastErr] = 3;
-      hitNote(S.lastErr, t, s, true);
+      hitNote(S.lastErr, t, cls, true);
       S.lastErr = -1;
-      flashKey(k, 'press', 120);
+      flashKey(k, 'press', 110);
     } else {
       S.status[S.pos] = 2;
       if (exp !== ' ') bumpStat(exp, 'miss');
@@ -902,23 +1297,22 @@ button { font: inherit; color: inherit; }
       S.events.push({ t, kind: 'miss' });
       S.lastErr = S.pos;
       S.pos++;
-      flashKey(k, 'oops', 320);
+      flashKey(k, 'oops', 300);
     }
-    if (S.events.length > 70) S.events.splice(0, S.events.length - 70);
+    if (S.events.length > 80) S.events.splice(0, S.events.length - 80);
 
     paintChars();
     updateHud();
-    if (S.pos >= LEN) finish(t);
+    if (S.pos >= S.len) finish(t);
     else updateNext();
   }
 
-  function hitNote(i, t, s, soft) {
-    const n = MELODY[i];
-    Sound.note(MEL_HZ[n], soft ? 0.6 : 1);
-    if (S.flow >= BASS_AT && i % 2 === 0) Sound.bass(CHORDS[i / 2]);
-    if (S.flow >= SPARKLE_AT) Sound.sparkle(MEL_HZ[n]);
-    S.events.push({ t, kind: 'note', row: ROW_OF[n], s: s == null ? 0.65 : s });
-    floatNote(i);
+  function hitNote(i, t, cls, soft) {
+    const name = noteAt(i), midi = midiOf(name), f = hzOf(midi), j = i % S.song.notes.length;
+    Sound.note(f, soft ? 0.6 : 1);
+    if (S.flow >= BASS_AT && j % 2 === 0) Sound.bass(S.song.chords[j / 2]);
+    if (S.flow >= OCTAVE_AT) Sound.octave(f);
+    S.events.push({ t, kind: 'note', row: S.song.rowOf[midi], cls });
   }
 
   function bumpStat(k, type) {
@@ -930,43 +1324,29 @@ button { font: inherit; color: inherit; }
     const el = S.keyEls[k];
     if (!el) return;
     el.classList.remove('press', 'oops');
-    void el.offsetWidth; // restart the animation
+    void el.offsetWidth;
     el.classList.add(cls);
     setTimeout(() => el.classList.remove(cls), ms);
   }
 
-  function floatNote(i) {
-    if (reduceMotion) return;
-    const c = S.charEls[i];
-    if (!c) return;
-    const sr = els.stage.getBoundingClientRect(), cr = c.getBoundingClientRect();
-    const n = document.createElement('span');
-    n.className = 'float';
-    n.textContent = i % 3 === 0 ? '♫' : '♪';
-    n.style.left = `${cr.left - sr.left + cr.width / 2}px`;
-    n.style.top = `${cr.top - sr.top - 18}px`;
-    els.stage.appendChild(n);
-    setTimeout(() => n.remove(), 950);
-  }
-
-  // ---------- End of song ----------
+  // ---------- End of lesson ----------
   function finish(t) {
     S.phase = 'done';
     S.endT = t;
     const round = S.round;
     paintChars();
     updateNext();
-    setTimeout(() => Sound.finale(), 380);
+    setTimeout(() => Sound.finale(S.song.end), 380);
 
     const right = S.status.filter((v) => v === 1).length;
     const played = S.status.filter((v) => v === 1 || v === 3).length;
-    const acc = right / LEN;
+    const acc = right / S.len;
     const flow = S.scores.length ? avg(S.scores) : 0;
-    const mins = Math.max((S.endT - S.startT) / 60000, 1 / 60);
-    const wpm = Math.round(played / 5 / mins);
-    let stars = 1;
-    if (flow >= STARS2.flow && acc >= STARS2.acc) stars = 2;
-    if (flow >= STARS3.flow && acc >= STARS3.acc) stars = 3;
+    const ms = Math.max(S.endT - S.startT, 1000);
+    const wpm = Math.round(played / 5 / (ms / 60000));
+    let level = 1;
+    if (flow >= LEVEL2.flow && acc >= LEVEL2.acc) level = 2;
+    if (flow >= LEVEL3.flow && acc >= LEVEL3.acc) level = 3;
     const tricky = Object.entries(S.stats)
       .map(([k, v]) => [k, v.miss * 2 + v.slow])
       .filter(([, score]) => score >= 2)
@@ -974,66 +1354,117 @@ button { font: inherit; color: inherit; }
       .slice(0, 3)
       .map(([k]) => k);
 
-    const id = LESSONS[S.lesson].id;
-    saved.best[id] = Math.max(saved.best[id] || 0, stars);
-    persist();
-    renderLessons();
+    const L = currentLesson();
+    if (!S.practice && L.kind !== 'custom') {
+      saved.best[L.id] = Math.max(levelOf(L), level);
+      persist();
+      renderNav();
+    }
 
+    const r = { acc, flow, wpm, level, tricky, ms, timing: { ...S.timing } };
     setTimeout(() => {
-      if (S.round === round && S.phase === 'done') showResults({ acc, flow, wpm, stars, tricky });
-    }, 1100);
+      if (S.round === round && S.phase === 'done') showResults(r);
+    }, 1000);
   }
 
-  const STAR_PATH = 'M12 2.6l2.9 6 6.5.8-4.8 4.5 1.2 6.5L12 17.3l-5.8 3.1 1.2-6.5L2.6 9.4l6.5-.8z';
+  // Text inside a colored fill: white or near-black, whichever reads better.
+  function inkFor(color) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(color.trim());
+    if (!m) return '#ffffff';
+    const n = parseInt(m[1], 16), ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
+      v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    const lum = 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+    return (1.05 / (lum + 0.05)) >= ((lum + 0.05) / 0.0617) ? '#ffffff' : '#0b0b0b';
+  }
+
+  function timingBar(tm) {
+    const total = tm.early + tm.on + tm.late;
+    if (!total) return '';
+    const parts = [['early', 'Early'], ['on', 'On beat'], ['late', 'Late']].filter(([k]) => tm[k] > 0);
+    const blocks = parts.map(([k, name]) => {
+      const share = tm[k] / total, label = pct(share);
+      const color = C[k];
+      const fits = share * 520 > 44;
+      return `<div class="${k}" style="flex:${tm[k]} 1 0;color:${inkFor(color)}" title="${name}: ${tm[k]} keys (${label})" aria-label="${name}: ${tm[k]} keys, ${label}">${fits ? label : ''}</div>`;
+    }).join('');
+    const legend = parts.map(([k, name]) => `<span><i class="sw ${k}"></i>${name}</span>`).join('');
+    return `<div class="timing"><span class="label">Timing</span><div class="seg" role="img" aria-label="Timing: ${parts.map(([k, n]) => `${n} ${pct(tm[k] / total)}`).join(', ')}">${blocks}</div><div class="legend">${legend}</div></div>`;
+  }
 
   function showResults(r) {
-    const last = S.lesson === LESSONS.length - 1;
-    const title = r.stars === 3 ? 'Smooth as starlight!' : r.stars === 2 ? 'Nice steady playing!' : 'You played the whole song!';
+    const L = currentLesson();
+    const practicing = !!S.practice, custom = L.kind === 'custom';
+    const heading = practicing ? 'Practice complete' : custom ? 'Word list complete' : 'Lesson complete';
     let tip;
-    if (r.acc < STARS2.acc) tip = 'Slow the beat down a little. A slow, steady beat is better than a fast, bumpy one.';
-    else if (r.flow < STARS2.flow) tip = 'Try to press each key as the faint star reaches the glowing line. Evenly spaced stars mean a smooth beat.';
-    else if (r.flow < STARS3.flow) tip = 'Nice and steady. Look at the next letter while you press this one, and your beat will get even smoother.';
-    else tip = 'That was smooth typing. Play it again a little faster, or move on to the next lesson.';
-    const goal = r.stars === 1 ? `For 2 stars: flow ${pct(STARS2.flow)} and accuracy ${pct(STARS2.acc)}.`
-      : r.stars === 2 ? `For 3 stars: flow ${pct(STARS3.flow)} and accuracy ${pct(STARS3.acc)}.`
-      : 'Three stars. Top marks on this lesson.';
-    const again = '<button type="button" class="btn" id="againBtn" disabled>Play again</button>';
-    const next = `<button type="button" class="btn" id="nextBtn" disabled>${last ? 'Back to lesson 1' : 'Next lesson'}</button>`;
-    const nextFirst = r.stars >= 2;
+    if (r.acc < LEVEL2.acc) tip = 'Slow the pace down a little. A slow, even pace scores higher than a fast, uneven one.';
+    else if (r.timing.early > r.timing.late * 2 && r.timing.early > r.timing.on * 0.5) tip = 'Many keys came early. Wait for the dashed marker to reach the line before you press.';
+    else if (r.flow < LEVEL2.flow) tip = 'Try to press each key as the dashed marker reaches the line. Evenly spaced bars mean an even pace.';
+    else if (r.flow < LEVEL3.flow) tip = 'Good, steady typing. Read the next letter while you press this one to smooth out the pauses.';
+    else tip = 'Smooth and even. Try the same lesson a little faster, or move on to the next one.';
+    const goal = r.level === 1 ? `Next level, Steady: flow ${pct(LEVEL2.flow)} and accuracy ${pct(LEVEL2.acc)}.`
+      : r.level === 2 ? `Next level, Mastered: flow ${pct(LEVEL3.flow)} and accuracy ${pct(LEVEL3.acc)}.`
+      : 'Mastered. This is the top level.';
+
+    let nextLabel, nextAction;
+    if (practicing) {
+      nextLabel = `Back to lesson ${S.lesson + 1}`;
+      nextAction = () => { S.practice = null; newRound(true, true); };
+    } else if (custom) {
+      nextLabel = 'Edit word list';
+      nextAction = () => newRound(true, true);
+    } else {
+      const n = nextLessonIndex();
+      nextLabel = n === 0 ? 'Back to lesson 1' : `Next: lesson ${n + 1}`;
+      nextAction = () => selectLesson(n);
+    }
+    const nextFirst = r.level >= 2 && !custom;
+    const again = `<button type="button" class="btn" id="againBtn" disabled>${practicing ? 'Practice again' : 'Retry'}</button>`;
+    const next = `<button type="button" class="btn" id="nextBtn" disabled>${nextLabel}</button>`;
+    const secs = Math.round(r.ms / 1000);
 
     els.results.innerHTML = `
       <div class="card" role="dialog" aria-labelledby="resTitle">
-        <div class="stars-big" role="img" aria-label="${r.stars} of 3 stars">${
-          [0, 1, 2].map((n) => `<svg viewBox="0 0 24 24" class="${n < r.stars ? 'on' : ''}"><path d="${STAR_PATH}"/></svg>`).join('')}</div>
-        <h2 id="resTitle">${title}</h2>
-        <div class="stats">
-          <div class="stat"><b>${pct(r.flow)}</b><span>flow</span></div>
-          <div class="stat"><b>${pct(r.acc)}</b><span>accuracy</span></div>
-          <div class="stat"><b>${r.wpm}</b><span>words per minute</span></div>
+        <div class="res-head">
+          <div><p class="label">${eyebrowOf(L)}</p><h2 id="resTitle">${heading}</h2></div>
+          <span class="badge l${r.level}">${levelBars(r.level)}${LEVELS[r.level]}</span>
         </div>
+        <div class="res-stats">
+          <div><b>${pct(r.flow)}</b><span>Flow</span></div>
+          <div><b>${pct(r.acc)}</b><span>Accuracy</span></div>
+          <div><b>${r.wpm}</b><span>Words per minute</span></div>
+          <div><b>${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}</b><span>Time</span></div>
+        </div>
+        ${timingBar(r.timing)}
         <p>${tip}</p>
-        ${r.tricky.length ? `<p class="tricky">Keys to practice: ${r.tricky.map((k) => `<span class="kbd">${keyName(k)}</span>`).join('')}</p>` : ''}
-        <p class="goal">${goal}</p>
+        ${r.tricky.length ? `<p class="tricky">Keys to practice: ${r.tricky.map((k) => `<span class="kbd">${keyName(k)}</span>`).join('')}
+          <button type="button" class="btn secondary mini" id="practiceBtn" disabled>Practice these keys</button></p>` : ''}
+        <p class="muted small">${goal}</p>
         <div class="btn-row">${nextFirst ? next + again : again + next}</div>
       </div>`;
     els.results.hidden = false;
-    const againBtn = $('againBtn'), nextBtn = $('nextBtn');
-    (nextFirst ? againBtn : nextBtn).classList.add('ghost');
+    const againBtn = $('againBtn'), nextBtn = $('nextBtn'), practiceBtn = $('practiceBtn');
+    (nextFirst ? againBtn : nextBtn).classList.add('secondary');
     againBtn.addEventListener('click', () => newRound(false));
-    nextBtn.addEventListener('click', () => { S.lesson = last ? 0 : S.lesson + 1; newRound(true, true); });
-    // Short pause so a kid still typing doesn't press a button by accident.
+    nextBtn.addEventListener('click', nextAction);
+    if (practiceBtn) practiceBtn.addEventListener('click', () => startPractice(r.tricky));
+    // Short pause so a key still being typed doesn't press a button by accident.
     setTimeout(() => {
-      againBtn.disabled = false;
-      nextBtn.disabled = false;
+      for (const b of [againBtn, nextBtn, practiceBtn]) if (b) b.disabled = false;
       (nextFirst ? nextBtn : againBtn).focus({ preventScroll: true });
-    }, 900);
+    }, 800);
   }
 
   // ---------- Keyboard input ----------
   function onKey(e) {
+    const tag = e.target && e.target.tagName;
+    if (tag === 'TEXTAREA' || tag === 'INPUT' || tag === 'SELECT') {
+      if (e.key === 'Escape' && tag === 'TEXTAREA') e.target.blur();
+      return;
+    }
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const k = e.key;
-    const onButton = e.target && e.target.tagName === 'BUTTON';
+    const onButton = tag === 'BUTTON';
     if (k === 'Escape') {
       if (S.phase !== 'intro') { e.preventDefault(); newRound(true, true); }
       return;
@@ -1052,102 +1483,79 @@ button { font: inherit; color: inherit; }
     if (k.length !== 1) return;
     e.preventDefault();
     if (e.repeat) return;
-    const caps = !!(e.getModifierState && e.getModifierState('CapsLock'));
-    if (caps !== S.caps) S.caps = caps;
+    S.caps = !!(e.getModifierState && e.getModifierState('CapsLock'));
     let t = e.timeStamp;
     if (!(t > 0) || Math.abs(t - performance.now()) > 1000) t = performance.now();
     onType(k.toLowerCase(), t);
   }
 
-  // ---------- Night sky ----------
-  const sky = { ctx: els.sky.getContext('2d'), w: 0, h: 0, bg: [] };
-  for (let i = 0; i < 90; i++) {
-    sky.bg.push({ x: Math.random(), y: Math.random(), r: 0.4 + Math.random() * 1.1, p: Math.random() * 6.28, sp: 0.6 + Math.random() * 1.4 });
-  }
-  const css = getComputedStyle(document.documentElement);
-  const C = {
-    star: css.getPropertyValue('--star').trim() || '#ffd56a',
-    paper: css.getPropertyValue('--paper').trim() || '#eef1fb',
-    miss: css.getPropertyValue('--miss').trim() || '#ff7b7b',
-  };
-
-  function sizeSky() {
-    const r = els.sky.getBoundingClientRect();
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    sky.w = r.width;
-    sky.h = r.height;
-    els.sky.width = Math.max(1, Math.round(r.width * dpr));
-    els.sky.height = Math.max(1, Math.round(r.height * dpr));
-    sky.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-
-  function rowY(r) {
-    const top = 24, bottom = sky.h - 32;
-    return bottom - (r / 5) * (bottom - top);
-  }
-
-  function starPath(ctx, x, y, r) {
-    ctx.beginPath();
-    for (let i = 0; i < 10; i++) {
-      const a = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 ? r * 0.45 : r;
-      ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+  // ---------- Timing chart ----------
+  const chart = { ctx: els.chart.getContext('2d'), w: 0, h: 0 };
+  const C = {};
+  function readColors() {
+    const css = getComputedStyle(document.documentElement);
+    for (const [k, v] of Object.entries({ on: '--accent', early: '--early', late: '--late', miss: '--miss', warm: '--text-3',
+      grid: '--border', label: '--text-3', ghost: '--text-2', playhead: '--accent' })) {
+      C[k] = css.getPropertyValue(v).trim() || '#888888';
     }
+  }
+
+  function sizeChart() {
+    const r = els.chart.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    chart.w = r.width;
+    chart.h = r.height;
+    els.chart.width = Math.max(1, Math.round(r.width * dpr));
+    els.chart.height = Math.max(1, Math.round(r.height * dpr));
+    chart.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  const GUTTER = 38;
+  function rowY(r) {
+    const n = S.song.rows.length, top = 16, bottom = chart.h - 28;
+    return n <= 1 ? (top + bottom) / 2 : bottom - (r / (n - 1)) * (bottom - top);
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
     ctx.closePath();
   }
 
-  function drawStar(x, y, r, alpha) {
-    const ctx = sky.ctx;
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = C.star;
-    ctx.shadowColor = C.star;
-    ctx.shadowBlur = r * 2;
-    starPath(ctx, x, y, r);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  function drawSky(now) {
-    const { ctx, w, h } = sky;
+  function drawChart(now) {
+    const { ctx, w, h } = chart;
     if (!w) return;
     ctx.clearRect(0, 0, w, h);
 
-    // Background stars drift slowly and twinkle.
-    const drift = reduceMotion ? 0 : now * 0.008;
-    ctx.fillStyle = C.paper;
-    for (const b of sky.bg) {
-      let x = (b.x * w - drift * b.r) % w;
-      if (x < 0) x += w;
-      ctx.globalAlpha = reduceMotion ? 0.4 : 0.2 + 0.3 * (0.5 + 0.5 * Math.sin(now * 0.0015 * b.sp + b.p));
-      ctx.beginPath();
-      ctx.arc(x, b.y * h, b.r, 0, 6.283);
-      ctx.fill();
-    }
-
-    // Faint guide lines, one per pitch, like a music box strip.
-    ctx.globalAlpha = 0.06;
-    ctx.strokeStyle = C.paper;
-    ctx.lineWidth = 1;
-    for (let r = 0; r < 6; r++) {
+    // Pitch rows with note names.
+    ctx.font = '500 10px "IBM Plex Mono", ui-monospace, monospace';
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'left';
+    for (let r = 0; r < S.song.rows.length; r++) {
       const y = Math.round(rowY(r)) + 0.5;
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      ctx.strokeStyle = C.grid;
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(GUTTER, y); ctx.lineTo(w, y); ctx.stroke();
+      ctx.fillStyle = C.label;
+      ctx.fillText(nameOf(S.song.rows[r]), 8, y);
     }
+    // Miss lane label.
+    ctx.fillStyle = C.label;
+    ctx.fillText('miss', 8, h - 11);
 
-    // The glowing line where notes land.
-    const playX = Math.round(w * 0.72);
-    const g = ctx.createLinearGradient(0, 0, 0, h);
-    g.addColorStop(0, 'rgba(255,213,106,0)');
-    g.addColorStop(0.5, 'rgba(255,213,106,0.55)');
-    g.addColorStop(1, 'rgba(255,213,106,0)');
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = g;
+    const playX = Math.round(GUTTER + (w - GUTTER) * 0.74);
+    ctx.fillStyle = C.playhead;
     ctx.fillRect(playX - 1, 6, 2, h - 12);
 
-    const pxPerBeat = Math.max(38, Math.min(70, w / 13));
+    const pxPerBeat = Math.max(30, Math.min(56, (w - GUTTER) / 16));
+    const barW = Math.max(10, Math.min(24, pxPerBeat * 0.55)), barH = 8;
     let xOf, notes;
     if (S.phase === 'intro') {
-      // Demo: what a steady beat looks like.
-      notes = MELODY.slice(0, 16).map((n, i) => ({ x: playX - (16 - i) * pxPerBeat * 0.8, row: ROW_OF[n], s: 0.9, t: -1e9 }));
+      notes = S.song.notes.slice(0, 16).map((n, i) => ({ x: playX - (16 - i) * pxPerBeat * 0.85, row: S.song.rowOf[midiOf(n)], cls: 'on', kind: 'note' }));
       xOf = (ev) => ev.x;
     } else {
       S.pxPerMs += (pxPerBeat / S.beat - S.pxPerMs) * 0.06;
@@ -1156,59 +1564,49 @@ button { font: inherit; color: inherit; }
       xOf = (ev) => playX - (ref - ev.t) * S.pxPerMs;
     }
 
-    // Constellation lines between notes.
-    ctx.globalAlpha = 0.35;
-    ctx.strokeStyle = C.star;
-    ctx.lineWidth = 1.4;
+    ctx.save();
     ctx.beginPath();
-    let started = false;
-    for (const ev of notes) {
-      if (ev.kind === 'miss') continue;
-      const x = xOf(ev), y = rowY(ev.row);
-      if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-
+    ctx.rect(GUTTER, 0, w - GUTTER, h);
+    ctx.clip();
     for (const ev of notes) {
       const x = xOf(ev);
-      if (x < -30 || x > w + 30) continue;
+      if (x < GUTTER - 30 || x > w + 30) continue;
       if (ev.kind === 'miss') {
-        ctx.globalAlpha = 0.7;
-        ctx.fillStyle = C.miss;
+        const y = h - 11, s = 4;
+        ctx.strokeStyle = C.miss;
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(x, h - 12, 3.2, 0, 6.283);
-        ctx.fill();
-        ctx.globalAlpha = 1;
+        ctx.moveTo(x - s, y - s); ctx.lineTo(x + s, y + s);
+        ctx.moveTo(x + s, y - s); ctx.lineTo(x - s, y + s);
+        ctx.stroke();
         continue;
       }
-      const age = now - ev.t;
-      const pop = !reduceMotion && age >= 0 && age < 260 ? 1 + 0.6 * (1 - age / 260) : 1;
-      drawStar(x, rowY(ev.row), (4 + 7 * ev.s) * pop, 0.45 + 0.55 * ev.s);
+      ctx.globalAlpha = S.phase === 'intro' ? 0.45 : 1;
+      ctx.fillStyle = C[ev.cls] || C.on;
+      roundRect(ctx, x - barW / 2, rowY(ev.row) - barH / 2, barW, barH, 4);
+      ctx.fill();
+      ctx.globalAlpha = 1;
     }
 
-    // Ghost star: where and when the next note is due.
-    if (S.phase === 'play' && S.pos < LEN) {
+    // Next note: where and when it is due.
+    if (S.phase === 'play' && S.pos < S.len) {
       let x = playX;
       if (S.lastKeyT != null && !S.onBreak) x = Math.max(playX, playX + (S.lastKeyT + S.beat - now) * S.pxPerMs);
-      const waiting = x <= playX + 0.5;
-      const pulse = reduceMotion ? 0.8 : 0.55 + 0.35 * Math.sin(now * 0.008);
-      ctx.save();
-      ctx.globalAlpha = waiting ? pulse : 0.5;
-      ctx.strokeStyle = C.star;
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = C.ghost;
+      ctx.lineWidth = 1.5;
       ctx.setLineDash([3, 3]);
-      starPath(ctx, x, rowY(ROW_OF[MELODY[S.pos]]), 10);
+      roundRect(ctx, x - barW / 2, rowY(S.song.rowOf[midiOf(noteAt(S.pos))]) - barH / 2, barW, barH, 4);
       ctx.stroke();
-      ctx.restore();
+      ctx.setLineDash([]);
     }
+    ctx.restore();
   }
 
   function frame(now) {
-    drawSky(now);
+    drawChart(now);
     if (S.phase === 'play' && S.lastKeyT != null && !S.onBreak && now - S.lastKeyT > breakMs()) {
       S.onBreak = true;
-      showHint('Take your time. Find the glowing key, then keep the beat going.');
+      showHint('Paused. Press the highlighted key to continue.');
     }
     requestAnimationFrame(frame);
   }
@@ -1217,15 +1615,37 @@ button { font: inherit; color: inherit; }
   function setSoundButton() {
     els.sound.setAttribute('aria-pressed', String(Sound.on));
     els.sound.setAttribute('aria-label', Sound.on ? 'Sound is on. Turn it off.' : 'Sound is off. Turn it on.');
+    els.sound.title = Sound.on ? 'Sound on' : 'Sound off';
   }
 
   function start(data) {
-    if (data && Number.isInteger(data.lesson) && data.lesson >= 0 && data.lesson < LESSONS.length) S.lesson = data.lesson;
+    data = data || {};
+    S.song = SONGS.find((s) => s.id === (data.song || saved.song)) || SONGS[0];
+    if (Number.isInteger(data.lesson) && data.lesson >= 0 && data.lesson < LESSONS.length) S.lesson = data.lesson;
+    // A shared link like index.html?words=cat,dog,fish opens My words with that list.
+    try {
+      const shared = new URLSearchParams(window.location.search).get('words');
+      if (shared && parseWords(shared).length) {
+        saved.custom = shared.replace(/,/g, ', ');
+        persist();
+        S.lesson = CUSTOM_INDEX;
+      }
+    } catch (e) { /* no query string */ }
+
+    readColors();
     buildKeyboard();
+    renderSongSelect();
     setSoundButton();
     newRound(true, false);
 
     els.startBtn.addEventListener('click', startPlay);
+    els.songSelect.addEventListener('change', () => {
+      S.song = SONGS.find((s) => s.id === els.songSelect.value) || SONGS[0];
+      saved.song = S.song.id;
+      persist();
+      newRound(true, false);
+    });
+    els.lessonSelect.addEventListener('change', () => selectLesson(Number(els.lessonSelect.value)));
     els.sound.addEventListener('click', () => {
       Sound.init();
       Sound.setOn(!Sound.on);
@@ -1234,23 +1654,39 @@ button { font: inherit; color: inherit; }
       setSoundButton();
       if (S.phase === 'play') blurActive();
     });
+    let typingTimer = 0;
+    els.customWords.addEventListener('input', () => {
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => {
+        saved.custom = els.customWords.value;
+        persist();
+        if (currentLesson().kind === 'custom' && S.phase === 'intro') newRound(true, false);
+      }, 250);
+    });
     document.addEventListener('keydown', onKey);
     els.stage.addEventListener('click', () => { if (S.phase === 'play') window.focus(); });
     window.addEventListener('blur', () => {
-      if (S.phase === 'play') { S.blurred = true; showHint('Click the game to keep typing.'); }
+      if (S.phase === 'play') { S.blurred = true; showHint('Click inside the lesson to keep typing.'); }
     });
     window.addEventListener('focus', () => {
       if (S.blurred) { S.blurred = false; if (!S.onBreak) hideHint(); }
     });
 
-    if (typeof ResizeObserver === 'function') new ResizeObserver(sizeSky).observe(els.sky);
-    else window.addEventListener('resize', sizeSky);
-    sizeSky();
+    // Follow light and dark mode in the chart as well.
+    if (window.matchMedia) {
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      if (mq.addEventListener) mq.addEventListener('change', readColors);
+    }
+    new MutationObserver(readColors).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+
+    if (typeof ResizeObserver === 'function') new ResizeObserver(sizeChart).observe(els.chart);
+    else window.addEventListener('resize', sizeChart);
+    sizeChart();
     requestAnimationFrame(frame);
   }
 
   if (window.claude && window.claude.hot && typeof window.claude.hot.snapshot === 'function') {
-    window.claude.hot.snapshot(() => ({ lesson: S.lesson }));
+    window.claude.hot.snapshot(() => ({ lesson: S.lesson, song: S.song.id }));
   }
   if (window.claude && window.claude.hot && typeof window.claude.hot.ready === 'function') window.claude.hot.ready(start);
   else start((window.claude && window.claude.hot && window.claude.hot.data) || {});
